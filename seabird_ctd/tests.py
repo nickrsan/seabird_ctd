@@ -39,3 +39,7 @@ class CTDTest(unittest.TestCase):
 		# we should run a status command, then wait 3 minutes for it to go to sleep, then run it again and make sure we
 		# get the results of the command.
 		pass
+
+
+if __name__ == "__main__":
+	unittest.main()

@@ -487,7 +487,6 @@ class CTD(object):
 
 	def __del__(self):
 		self.close()
-		pass
 
 def interrupt_checker(server, username, password, vhost, queue, interval):
 	"""
