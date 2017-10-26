@@ -15,11 +15,12 @@ import datetime
 import os
 import re
 import logging
+import traceback
+
 import six
 
 import serial
 
-logging.basicConfig(level=logging.DEBUG)
 log = logging.getLogger("seabird_ctd")
 
 try:
@@ -128,6 +129,7 @@ class CTD(object):
 
 		self.command_object = None
 		self.handler = None  # will be set if self.listen is called
+		self.held_records = []
 
 		# STATUS INFO TO BE SET BY .status()
 		self.full_model = None
@@ -199,7 +201,7 @@ class CTD(object):
 
 		response = self._clean(data)
 
-		if self.is_sampling:  # any time we read data, if we're sampling, we should check it for records
+		if self.is_sampling and self.handler:  # any time we read data, if we're sampling, we should check it for records
 			self.check_data_for_records(response)
 
 		if "timeout" in response:  # if we got a timeout the first time, then we should be reconnected. Rerun this function and return the results
@@ -233,18 +235,35 @@ class CTD(object):
 		return self.send_command(" ", length_to_read="ALL")  # Send a single character to wake the device, get the response so that we clear the buffer
 
 	def status(self):
-		status = self.send_command("DS")
-		status_parts = self.command_object.parse_status(status)
-		for key in status_parts:  # the command object parses the status message for the specific model. Returns a dict that we'll set as values on the object here
-			setattr(self, key, status_parts[key])  # set each returned value as an attribute on this object
+		try:
+			status = self.send_command("DS")
+			status_parts = self.command_object.parse_status(status)
+			for key in status_parts:  # the command object parses the status message for the specific model. Returns a dict that we'll set as values on the object here
+				setattr(self, key, status_parts[key])  # set each returned value as an attribute on this object
 
-		self.last_status = datetime.datetime.now(timezone.utc)
+			self.last_status = datetime.datetime.now(timezone.utc)
 
-		log.info(status)
+			log.info(status)
+		except:  # no matter what exception is raised, we'll most likely want to roll through this
+			if self.last_status is not None:  # if this isn't our first check of the status, then warn, but keep going
+				log.warning("Failed to retrieve or parse status message. Proceeding, but some information, such as battery voltage, may be out of date. Error given was {}".format(traceback.format_exc()))
+			else:  # if it is our first time getting status data, raise the exception up, because we shouldn't proceed without it
+				raise
 
 		return status
 
 	def setup_interrupt(self, rabbitmq_server, username, password, vhost, queue=None):
+		"""
+			Used to set the monitoring functions to use the interrupt method, which allows messages to be passed to the CTD
+			from the user even while monitoring for data. By default, if this function is not called, then the monitoring code
+			cannot be interrupted and simply runs until the user cancels it.
+		:param rabbitmq_server:
+		:param username:
+		:param password:
+		:param vhost:
+		:param queue:
+		:return:
+		"""
 
 		if not interrupt:
 			raise CTDConfigurationError("Can't set up interrupt unless Pika Python package is installed. Pika was not found")
@@ -417,7 +436,14 @@ class CTD(object):
 
 	def check_data_for_records(self, data):
 		records = self.find_and_insert_records(data)
-		self.handler(records)  # Call the provided handler function to do whatever the caller wants to do with the data
+
+		if not self.handler:  # if it's sampling and we've received records, but not yet configured a handler, hold onto the records until a handler is configured
+			self.held_records += records
+		else:
+			if len(self.held_records) > 0:
+				self.handler(self.held_records)  # handle the held records first, then zero out the list
+				self.held_records = []
+			self.handler(records)  # Call the provided handler function to do whatever the caller wants to do with the data
 
 	def find_and_insert_records(self, data):
 		records = []
