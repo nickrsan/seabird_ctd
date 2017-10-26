@@ -6,7 +6,7 @@
 """
 
 __author__ = "nickrsan"
-import seabird_ctd.version as __version__
+from seabird_ctd.version import version as __version__
 
 import time
 from datetime import timezone
@@ -175,13 +175,13 @@ class CTD(object):
 				self.model = line
 
 		if not self.command_object:  # if we didn't get it from startup, issue a DS to determine it and peel it off the first part
-			self.model = self._send_command("DS")[1][:6]  # it'll be the first 6 characters of the
+			self.model = self.send_command("DS")[1][:6]  # it'll be the first 6 characters of the
 			self.command_object = globals()[supported_ctds[self.model]]()
 
 		if not self.command_object:
 			raise CTDConnectionError("Unable to wake CTD or determine its type. There could be a connection error or this is currently plugged into an unsupported model")
 
-	def _send_command(self, command=None, length_to_read="ALL"):
+	def send_command(self, command=None, length_to_read="ALL"):
 		if command:
 			self.ctd.write(six.b('{}\r\n'.format(command)))  # doesn't seem to work unless we pass it a windows line ending. Sends command, but no results
 
@@ -192,6 +192,8 @@ class CTD(object):
 			while new_data not in (b"", None):
 				new_data = self.ctd.read(1000)  # if we're expecting quite a lot, then keep reading until we get nothing
 				data += new_data
+		elif length_to_read is None:
+			return  # for some commands, such as QS, we want to not attempt a read after sending
 		else:
 			data = self.ctd.read(length_to_read)
 
@@ -201,12 +203,12 @@ class CTD(object):
 			self.check_data_for_records(response)
 
 		if "timeout" in response:  # if we got a timeout the first time, then we should be reconnected. Rerun this function and return the results
-			return self._send_command(command, length_to_read)
+			return self.send_command(command, length_to_read)
 		else:
 			return response
 
 	def _read_all(self):
-		return self._send_command(command=None, length_to_read="ALL")
+		return self.send_command(command=None, length_to_read="ALL")
 
 	def _clean(self, response):
 		return response.decode("utf-8").split("\r\n")  # first element of list should now be the command, but we'll let the caller filter that
@@ -215,23 +217,23 @@ class CTD(object):
 		datetime_commands = self.command_object.set_datetime()
 		for command in datetime_commands:
 			log.info("Setting datetime: {}".format(command))
-			self._send_command(command)
+			self.send_command(command)
 
 	def take_sample(self):
-		self.last_sample = self._send_command("TS", length_to_read=1000)
+		self.last_sample = self.send_command("TS", length_to_read=1000)
 		return self.last_sample
 
 	def _filter_samples_to_data(self,):
 		pass
 
 	def sleep(self):
-		self._send_command("QS")
+		self.send_command("QS")
 
 	def wake(self):
-		return self._send_command(" ", length_to_read="ALL")  # Send a single character to wake the device, get the response so that we clear the buffer
+		return self.send_command(" ", length_to_read="ALL")  # Send a single character to wake the device, get the response so that we clear the buffer
 
 	def status(self):
-		status = self._send_command("DS")
+		status = self.send_command("DS")
 		status_parts = self.command_object.parse_status(status)
 		for key in status_parts:  # the command object parses the status message for the specific model. Returns a dict that we'll set as values on the object here
 			setattr(self, key, status_parts[key])  # set each returned value as an attribute on this object
@@ -300,9 +302,9 @@ class CTD(object):
 			self.stop_autosample()  # stop it so we can set the parameters
 
 		if not self.is_sampling:  # will be updated if we successfully stop sampling
-			self._send_command(self.command_object.sample_interval(interval))  # set the interval to sample at
-			self._send_command("TXREALTIME={}".format(realtime))  # set the interval to sample at
-			self._send_command("STARTNOW")  # start sampling
+			self.send_command(self.command_object.sample_interval(interval))  # set the interval to sample at
+			self.send_command("TXREALTIME={}".format(realtime))  # set the interval to sample at
+			self.send_command("STARTNOW")  # start sampling
 
 		if realtime == "Y":
 			if not handler:  # if they specified realtime data transmission, but didn't provide a handler, abort.
@@ -370,7 +372,7 @@ class CTD(object):
 				self.interrupt_connection.stop()
 				self.close()  # puts CTD to sleep and closes connection
 			else:
-				data = self._send_command(body)
+				data = self.send_command(body)
 				log.info(data)
 				self.check_data_for_records(data)
 
@@ -452,7 +454,7 @@ class CTD(object):
 		return records
 
 	def stop_autosample(self):
-		self._send_command("STOP")
+		self.send_command("STOP")
 		self.status()
 
 		if self.is_sampling is not False:
@@ -471,7 +473,7 @@ class CTD(object):
 
 		commands = self.command_object.retrieve_samples(0, self.sample_number)
 		for command in commands:
-			results = self._send_command(command)  # if we have multiple commands, only the later one will have data
+			results = self.send_command(command)  # if we have multiple commands, only the later one will have data
 
 		# we now have all the samples and can parse them so that we can insert them.
 
