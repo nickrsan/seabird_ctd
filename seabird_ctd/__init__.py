@@ -215,7 +215,21 @@ class CTD(object):
 	def _clean(self, response):
 		return response.decode("utf-8").split("\r\n")  # first element of list should now be the command, but we'll let the caller filter that
 
-	def set_datetime(self):
+	def set_datetime(self, raise_error=False):
+		"""
+			Attempt to set the datetime. Logs a warning if that can't be done because the sampler is logging. If you want
+			it to raise an exception
+		:param raise_error: When False, the default, this function warns if it can't set the datetime. When True, raises CTDOperationError
+		:return:
+		"""
+		if self.is_sampling:
+			msg = "Can't change datetime while CTD is sampling. Issue a stop command (or call ctd.stop_autosample()), run set_datetime again, and restart sampling in order to change datetime."
+			if raise_error:
+				raise CTDOperationError(msg)
+			else:
+				log.warning(msg)
+				return
+
 		datetime_commands = self.command_object.set_datetime()
 		for command in datetime_commands:
 			log.info("Setting datetime: {}".format(command))
@@ -229,7 +243,7 @@ class CTD(object):
 		pass
 
 	def sleep(self):
-		self.send_command("QS")
+		self.send_command("QS", length_to_read=None)
 
 	def wake(self):
 		return self.send_command(" ", length_to_read="ALL")  # Send a single character to wake the device, get the response so that we clear the buffer
@@ -381,7 +395,6 @@ class CTD(object):
 			elif body == "DS" or body == "STATUS":
 				status = self.status()
 				log.info(status)
-				self.check_data_for_records(status)  # since logging is running now, make sure we didn't accidentally pull in some data
 			elif body == "STOP_MONITORING":  # just stop monitoring - once monitoring is stopped, they can connect to the device to stop autosampling
 				log.info("Stopping monitoring of records")
 				self._stop_monitoring = True
@@ -393,7 +406,6 @@ class CTD(object):
 			else:
 				data = self.send_command(body)
 				log.info(data)
-				self.check_data_for_records(data)
 
 			self.interrupt_connection.acknowledge_message(method.delivery_tag)
 
@@ -426,10 +438,8 @@ class CTD(object):
 
 		log.debug("Checking for CTD data")
 
-		data = self._read_all()
+		data = self._read_all()  # this will automatically check for data
 		log.debug("Data received")
-		log.debug(data)
-		self.check_data_for_records(data)
 
 		if (datetime.datetime.now(timezone.utc) - self.last_status).total_seconds() > 3600:  # if it's been more than an hour since we checked the status, refresh it so we get new battery stats
 			self.status()  # this can be run while the device is logging
