@@ -120,6 +120,7 @@ class CTD(object):
 		"""
 		If COM_port is not provided, checks for an environment variable named SEABIRD_CTD_PORT. Otherwise raises
 		CTDConnectionError
+
 		"""
 
 		if COM_port is None:
@@ -251,9 +252,11 @@ class CTD(object):
 		"""
 			Attempt to set the datetime. Logs a warning if that can't be done because the sampler is logging. If you want
 			it to raise an exception
+
 		:param raise_error: When False, the default, this function warns if it can't set the datetime. When True, raises CTDOperationError
 		:return:
 		"""
+
 		if self.is_sampling:
 			msg = "Can't change datetime while CTD is sampling. Issue a stop command (or call ctd.stop_autosample()), run set_datetime again, and restart sampling in order to change datetime."
 			if raise_error:
@@ -306,6 +309,7 @@ class CTD(object):
 			Used to set the monitoring functions to use the interrupt method, which allows messages to be passed to the CTD
 			from the user even while monitoring for data. By default, if this function is not called, then the monitoring code
 			cannot be interrupted and simply runs until the user cancels it.
+
 		:param rabbitmq_server:
 		:param username:
 		:param password:
@@ -330,6 +334,7 @@ class CTD(object):
 	def check_interrupt(self):
 		"""
 			Should return True if we're supposed to stop listening or False if we shouldn't
+
 		:return:
 		"""
 
@@ -364,6 +369,7 @@ class CTD(object):
 						for any length of time, but will retain prior settings (ignoring the new interval).
 		:return:
 		"""
+
 		self.log.info("Initiating autosampling")
 
 		if self.is_sampling and not no_stop:
@@ -395,7 +401,8 @@ class CTD(object):
 
 			:param handler: (See start_autosample documentation). A functiion to process new records as they are available.
 			:param interval: The sampling interval, in seconds.
-		:return:
+
+			:return:
 		"""
 
 		self.log.info("Starting listening loop for CTD data")
@@ -418,12 +425,14 @@ class CTD(object):
 				using (usually STOP) then send a STOP command through the messaging to this program so it will stop checking
 				the CTD for new data. DISCONNECT is equivalent to STOP_MONITORING, but also puts the CTD to sleep and
 				closes the connection to the CTD.
+
 			:param ch:
 			:param method:
 			:param properties:
 			:param body:
 			:return:
 			"""
+
 			logging.info(" [x] Received Command via Queue %r" % body)
 
 			body = body.decode("utf-8")
@@ -541,8 +550,10 @@ class CTD(object):
 			pull in those records.
 
 			NOTE - this command STOPS autosampling if it's running - it must be restarted on its own.
+
 		:return:
 		"""
+
 		self.stop_autosample()
 
 		commands = self.command_object.retrieve_samples(0, self.sample_number)
@@ -554,8 +565,10 @@ class CTD(object):
 	def close(self):
 		"""
 			Put the CTD to sleep and close the connection
+
 		:return:
 		"""
+
 		self.sleep()
 		self.ctd.close()
 		self.ctd = None
@@ -563,6 +576,7 @@ class CTD(object):
 	def __del__(self):
 		""""
 			Check if the CTD is still open. If the user called close on their own, then this will create an error.
+
 		"""
 		if self.ctd:
 			self.close()
@@ -571,6 +585,7 @@ def interrupt_checker(server, username, password, vhost, queue, interval):
 	"""
 		When using the interrupt method, this code handles the scheduling of the actual checking by connecting
 		to RabbitMQ and sending READ commands every interval
+
 	:param server:
 	:param username:
 	:param password:
