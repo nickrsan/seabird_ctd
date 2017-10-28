@@ -22,20 +22,19 @@ import six
 import serial
 
 #logging.basicConfig(level=logging.DEBUG)
-log = logging.getLogger("seabird_ctd")
 
 try:
 	import pika
 except ImportError:
 	interrupt = None
-	log.debug("pika not available, can't use RabbitMQ to check for messages")
+	logging.debug("pika not available, can't use RabbitMQ to check for messages")
 
 try:
 	from seabird_ctd import interrupt
 	from multiprocessing import Process
 except:
 	interrupt = None
-	log.warning("Unable to load a required module for interrupt queue. Can be ignored if not using RabbitMQ, but this message is unusual regardless.")
+	logging.warning("Unable to load a required module for interrupt queue. Can be ignored if not using RabbitMQ, but this message is unusual regardless.")
 
 class SBE37(object):
 	def __init__(self):
@@ -122,12 +121,15 @@ class CTD(object):
 		If COM_port is not provided, checks for an environment variable named SEABIRD_CTD_PORT. Otherwise raises
 		CTDConnectionError
 		"""
+
 		if COM_port is None:
 			if "SEABIRD_CTD_PORT" in os.environ:
 				COM_port = os.environ["SEABIRD_CTD_PORT"]
 			else:
 				raise CTDConnectionError("SEABIRD_CTD_PORT environment variable is not defined. Don't know what COM port"
 										 "to connect to for CTD data. Can't collect CTD data.")
+
+		self.log = logging.getLogger("seabird_ctd.{}".format(COM_port))  # lets you tune into all seabird_ctd logging, or just this one by com port
 
 		self.last_sample = None
 		self.is_sampling = None  # starts at None, will be set when DS is run.
@@ -157,9 +159,10 @@ class CTD(object):
 		self._stop_monitoring = False  # a flag that will be monitored to determine if we should stop checking for commands
 		self._close_connection = False  # same as previous
 
-		self.determine_ctd_model()
 		self.last_status = None  # will be set each time status is run
-		self.status()  # will fill some fields in so we know what sample it's on, etc
+		self.determine_ctd_model()
+		if self.last_status is None:  # we check it here because determine_ctd_model might run it if it needs to. Don't waste time doubling up.
+			self.status()  # will fill some fields in so we know what sample it's on, etc
 
 	@property
 	def battery_voltage(self):
@@ -178,25 +181,26 @@ class CTD(object):
 
 	def determine_ctd_model(self):
 		try:
-			log.debug("Waking CTD")
-			ctd_info = self.wake()  # TODO: Is the data returned from wake always junk? What if this is starting up after setting the CTD to autosample, then the server crashes and is reconnecting
+			self.log.debug("Waking CTD")
+			self.wake()
+			ctd_info = self._read_all() # TODO: Is the data returned from wake always junk? What if this is starting up after setting the CTD to autosample, then the server crashes and is reconnecting
 		except UnicodeDecodeError:
 			raise CTDConfigurationError("Unable to decode response from CTD. Try a different baud setting and ensure it matches the CTD's internal configuration")
 
-		log.debug("CTD responded with {}".format(ctd_info))
+		self.log.debug("CTD responded with {}".format(ctd_info))
 
 		for line in ctd_info:  # it should write out the model when you connect - this works unless it hasn't timed out since last connection
 			if line in supported_ctds.keys():
-				log.info("Model Found: {}".format(line))
+				self.log.info("Model Found: {}".format(line))
 				self.command_object = globals()[supported_ctds[line]]()  # get the object that has the command info for this CTD
 				self.model = line
 
 		if not self.command_object:  # if we didn't get it from startup, issue a DS to determine it and peel it off the first part
-			log.debug("Trying backup method to determine model")
+			self.log.debug("Trying backup method to determine model")
 			ds = self.send_command("DS")
-			log.debug("CTD responded with {}".format(ds))
+			self.log.debug("CTD responded with {}".format(ds))
 			self.model = ds[1][:6]  # it'll be the first 6 characters of the
-			log.debug("Best guess for model is {}".format(self.model))
+			self.log.debug("Best guess for model is {}".format(self.model))
 
 			if self.model not in supported_ctds:
 				raise CTDUnsupportedError("Model '{}' is not supported. If this doesn't match the model you have, then the model information did not correctly parse. You may try again.".format(self.model))
@@ -209,30 +213,33 @@ class CTD(object):
 	def send_command(self, command=None, length_to_read="ALL"):
 		if command:
 			self.ctd.write(six.b('{}\r\n'.format(command)))  # doesn't seem to work unless we pass it a windows line ending. Sends command, but no results
+			time.sleep(1)
 
-		# reads after sending by default so that we can determine if there was a timeout
-		if length_to_read == "ALL":
-			data = b""
-			new_data = "start"
-			while new_data not in (b"", None):
-				new_data = self.ctd.read(1000)  # if we're expecting quite a lot, then keep reading until we get nothing
-				data += new_data
-		elif length_to_read is None:
-			return  # for some commands, such as QS, we want to not attempt a read after sending
-		else:
-			data = self.ctd.read(length_to_read)
+		self.log.debug("{} bytes in waiting".format(self.ctd.in_waiting))
+		if self.ctd.in_waiting > 0:  # if the CTD sent data and we haven't read it yet
+			# reads after sending by default so that we can determine if there was a timeout
+			if length_to_read == "ALL":
+				data = b""
+				new_data = "start"
+				while new_data not in (b"", None):
+					new_data = self.ctd.read(1000)  # if we're expecting quite a lot, then keep reading until we get nothing
+					data += new_data
+			elif length_to_read is None:
+				return  # for some commands, such as QS, we want to not attempt a read after sending
+			else:
+				data = self.ctd.read(length_to_read)
 
-		response = self._clean(data)
+			response = self._clean(data)
 
-		if self.is_sampling and self.handler:  # any time we read data, if we're sampling, we should check it for records
-			self.check_data_for_records(response)
+			if self.is_sampling:  # any time we read data, if we're sampling, we should check it for records
+				self.check_data_for_records(response)
 
-		if "timeout" in response or self.model in response:  # if we got a timeout the first time, then we should be reconnected. Rerun this function and return the results
-			# we can safely check for the model because by the time it's all a list, no single line in the list is *only* the model unless we received a timeout
-			log.debug("Received unexpected response. Resending command. Response was {}".format(response))
-			return self.send_command(command, length_to_read)
-		else:
-			return response
+			if "timeout" in response or self.model in response:  # if we got a timeout the first time, then we should be reconnected. Rerun this function and return the results
+				# we can safely check for the model because by the time it's all a list, no single line in the list is *only* the model unless we received a timeout
+				self.log.debug("Received unexpected response. Resending command (if any - input was {}). Response was {}".format(command, response))
+				return self.send_command(command, length_to_read)
+			else:
+				return response
 
 	def _read_all(self):
 		return self.send_command(command=None, length_to_read="ALL")
@@ -252,12 +259,12 @@ class CTD(object):
 			if raise_error:
 				raise CTDOperationError(msg)
 			else:
-				log.warning(msg)
+				self.log.warning(msg)
 				return
 
 		datetime_commands = self.command_object.set_datetime()
 		for command in datetime_commands:
-			log.info("Setting datetime: {}".format(command))
+			self.log.info("Setting datetime: {}".format(command))
 			self.send_command(command, length_to_read=None)
 
 	def take_sample(self):
@@ -271,10 +278,13 @@ class CTD(object):
 		self.send_command("QS", length_to_read=None)
 
 	def wake(self):
-		return self.send_command("DS", length_to_read="ALL")  # Send a single character to wake the device, get the response so that we clear the buffer
+		self.send_command("\r\n", length_to_read=None)  # Send a single character to wake the device, get the response so that we clear the buffer
 
 	def status(self):
 		try:
+			if self.ctd.in_waiting > 0:  # any current waiting characters will make parsing weird.
+				self._read_all()  # clear the input buffer, check for any data in the pipeline
+
 			status = self.send_command("DS")
 			status_parts = self.command_object.parse_status(status)
 			for key in status_parts:  # the command object parses the status message for the specific model. Returns a dict that we'll set as values on the object here
@@ -282,10 +292,10 @@ class CTD(object):
 
 			self.last_status = datetime.datetime.now(timezone.utc)
 
-			log.info(status)
+			self.log.info(status)
 		except:  # no matter what exception is raised, we'll most likely want to roll through this
 			if self.last_status is not None:  # if this isn't our first check of the status, then warn, but keep going
-				log.warning("Failed to retrieve or parse status message. Proceeding, but some information, such as battery voltage, may be out of date. CTD response was {}. Error given was {}".format(status, traceback.format_exc()))
+				self.log.warning("Failed to retrieve or parse status message. Proceeding, but some information, such as battery voltage, may be out of date. CTD response was {}. Error given was {}".format(status, traceback.format_exc()))
 			else:  # if it is our first time getting status data, raise the exception up, because we shouldn't proceed without it
 				raise
 
@@ -354,15 +364,16 @@ class CTD(object):
 						for any length of time, but will retain prior settings (ignoring the new interval).
 		:return:
 		"""
-		log.info("Initiating autosampling")
+		self.log.info("Initiating autosampling")
 
 		if self.is_sampling and not no_stop:
-			self.stop_autosample()  # stop it so we can set the parameters
+			self.stop_autosample()  # stop it so we can set the parameters - stop_autosample sets the flag
 
 		if not self.is_sampling:  # will be updated if we successfully stop sampling
-			self.send_command(self.command_object.sample_interval(interval))  # set the interval to sample at
-			self.send_command("TXREALTIME={}".format(realtime))  # set the interval to sample at
-			self.send_command("STARTNOW")  # start sampling
+			self.send_command(self.command_object.sample_interval(interval), length_to_read=None)  # set the interval to sample at
+			self.send_command("TXREALTIME={}".format(realtime), length_to_read=None)  # set the interval to sample at
+			self.send_command("STARTNOW", length_to_read=100)  # start sampling - we need to read to clear the buffer
+			self.send_command("\r\n", length_to_read=None)  # send a newline so that we get a new prompt again
 			self.status()  # make sure the status data is up to date. Doing it this way ratehr than setting manually so that if it failed for some reason, the object would still be correct
 							# if is_sampling doesn't get updated here, data reading won't work correctly, so this is important
 
@@ -387,7 +398,7 @@ class CTD(object):
 		:return:
 		"""
 
-		log.info("Starting listening loop for CTD data")
+		self.log.info("Starting listening loop for CTD data")
 
 		self.check_interval = interval
 
@@ -421,30 +432,30 @@ class CTD(object):
 					self.read_records()
 			elif body == "DS" or body == "STATUS":
 				status = self.status()
-				log.info(status)
+				self.log.info(status)
 			elif body == "STOP_MONITORING":  # just stop monitoring - once monitoring is stopped, they can connect to the device to stop autosampling
-				log.info("Stopping monitoring of records")
+				self.log.info("Stopping monitoring of records")
 				self._stop_monitoring = True
 				self.interrupt_connection.stop()
 			elif body == "DISCONNECT":
-				log.info("Shutting down monitoring script and closing connection to CTD")
+				self.log.info("Shutting down monitoring script and closing connection to CTD")
 				self.interrupt_connection.stop()
 				self.close()  # puts CTD to sleep and closes connection
 			else:
 				data = self.send_command(body)
-				log.info(data)
+				self.log.info(data)
 
 			self.interrupt_connection.acknowledge_message(method.delivery_tag)
 
 		if interrupt and self.rabbitmq_server:
-			log.debug("Starting interrupt listening loop")
+			self.log.debug("Starting interrupt listening loop")
 
 			self.interrupt_connection.handler = interrupt_handler
 
 			self._stop_monitoring = False  # reset the flags that are used to determine if we should stop
 			self._close_connection = False
 
-			log.debug("Spinning up CTD read loop process")
+			self.log.debug("Spinning up CTD read loop process")
 			self.p = Process(target=interrupt_checker, kwargs={"server": self.rabbitmq_server,
 							  "username": self.interrupt_connection.username,
 							  "password": self.interrupt_connection.password,
@@ -452,7 +463,7 @@ class CTD(object):
 							  "queue": self.interrupt_connection.QUEUE,
 							  "interval": self.check_interval})
 			self.p.start()
-			log.info(self.p.join(5))  # give it 5 seconds of blocking to detect if the process exits
+			self.log.info(self.p.join(5))  # give it 5 seconds of blocking to detect if the process exits
 
 			self.interrupt_connection.run()  # starts listening for commands
 
@@ -463,7 +474,7 @@ class CTD(object):
 
 	def read_records(self):
 
-		log.debug("Checking for CTD data")
+		self.log.debug("Checking for CTD data")
 
 		data = self._read_all()  # this will automatically check for data
 
@@ -516,7 +527,8 @@ class CTD(object):
 		return records
 
 	def stop_autosample(self):
-		self.send_command("STOP")
+		self.log.info("Stopping existing autosampling")
+		self.send_command("STOP", length_to_read=None)
 		self.status()
 
 		if self.is_sampling is not False:
