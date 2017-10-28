@@ -27,7 +27,13 @@ setup(
     version=version,
 
     description='Tools for communicating with, retrieving data from, and managing a fixed Seabird CTD deployment',
-    long_description=long_description,
+    long_description="""
+    The Seabird CTD library communicates with, controls, and reads data directly off of a Seabird CTD. It has been designed for the legacy SBE 39 and the modern SBE 37+, but can be extended to support other models easily. Other CTD packages focus on working with the data, especially profiles, once it's downloaded, but this package is designed to allow for direct control and monitoring during a longterm fixed deployment. The authors use this code to feed the CTD data into a database via django in realtime and implement the monitoring as a management command.
+    
+    In-development documentation can be found at https://seabird-ctd.readthedocs.io/en/latest/
+    
+    Installation documentation can be found at https://bitbucket.org/b195m/seabird_ctd/
+    """,
 
     # The project's main homepage.
     url='https://bitbucket.org/b195m/seabird_ctd/',
