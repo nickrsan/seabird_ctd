@@ -214,16 +214,15 @@ class CTD(object):
 	def send_command(self, command=None, length_to_read="ALL"):
 		if command:
 			self.ctd.write(six.b('{}\r\n'.format(command)))  # doesn't seem to work unless we pass it a windows line ending. Sends command, but no results
-			time.sleep(1)
+			time.sleep(1)  # was this actually necessary? Try removing it.
 
 		self.log.debug("{} bytes in waiting".format(self.ctd.in_waiting))
 		if self.ctd.in_waiting > 0:  # if the CTD sent data and we haven't read it yet
 			# reads after sending by default so that we can determine if there was a timeout
 			if length_to_read == "ALL":
 				data = b""
-				new_data = "start"
-				while new_data not in (b"", None):
-					new_data = self.ctd.read(1000)  # if we're expecting quite a lot, then keep reading until we get nothing
+				while self.ctd.in_waiting > 0:
+					new_data = self.ctd.read(self.ctd.in_waiting)  # if we're expecting quite a lot, then keep reading until we get nothing
 					data += new_data
 			elif length_to_read is None:
 				return  # for some commands, such as QS, we want to not attempt a read after sending
