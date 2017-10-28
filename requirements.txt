@@ -1,0 +1,3 @@
+pyserial
+pika
+six
