@@ -33,6 +33,8 @@ setup(
     In-development documentation can be found at https://seabird-ctd.readthedocs.io/en/latest/
     
     Installation documentation can be found at https://bitbucket.org/b195m/seabird_ctd/
+    
+    This code was developed by Nick Santos for The University of Oregon with funding from the National Science Foundation.
     """,
 
     # The project's main homepage.
