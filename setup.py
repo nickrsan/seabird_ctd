@@ -10,7 +10,7 @@ from setuptools import setup, find_packages
 from codecs import open
 from os import path
 
-from seabird_ctd import __version__ as version
+#from seabird_ctd import __version__ as version  # we need to move this to a place where it doesn't load dependencies before we can use this
 
 here = path.abspath(path.dirname(__file__))
 
@@ -19,12 +19,11 @@ with open(path.join(here, 'README.md'), 'r', encoding='utf-8') as f:
     long_description = f.read()
 
 setup(
-    name="Seabird CTD",
-
+    name="seabird_ctd",
     # Versions should comply with PEP440.  For a discussion on single-sourcing
     # the version across setup.py and the project code, see
     # https://packaging.python.org/en/latest/single_source_version.html
-    version=version,
+    version="0.2.1.5",
 
     description='Tools for communicating with, retrieving data from, and managing a fixed Seabird CTD deployment',
     long_description="""
@@ -32,7 +31,8 @@ setup(
     
     In-development documentation can be found at https://seabird-ctd.readthedocs.io/en/latest/
     
-    Installation documentation can be found at https://bitbucket.org/b195m/seabird_ctd/
+    Installation documentation can be found at https://bitbucket.org/b195m/seabird_ctd/ - note that for installation,
+    the package name is seabird-ctd (eg: `pip install seabird-ctd`), but when using, the package name is seabird_ctd.
     
     This code was developed by Nick Santos for The University of Oregon with funding from the National Science Foundation.
     """,
