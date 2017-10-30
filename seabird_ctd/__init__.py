@@ -215,7 +215,7 @@ class CTD(object):
 		for line in ctd_info:  # it should write out the model when you connect - this works unless it hasn't timed out since last connection
 			if line in supported_ctds.keys():
 				self.log.info("Model Found: {}".format(line))
-				self.command_object = globals()[supported_ctds[line]]()  # get the object that has the command info for this CTD
+				self.command_object = globals()[supported_ctds[line]](main_ctd=self)  # get the object that has the command info for this CTD
 				self.model = line
 
 		if not self.command_object:  # if we didn't get it from startup, issue a DS to determine it and peel it off the first part
@@ -228,7 +228,7 @@ class CTD(object):
 			if self.model not in supported_ctds:
 				raise CTDUnsupportedError("Model '{}' is not supported. If this doesn't match the model you have, then the model information did not correctly parse. You may try again.".format(self.model))
 
-			self.command_object = globals()[supported_ctds[self.model]]()
+			self.command_object = globals()[supported_ctds[self.model]](main_ctd=self)
 
 		if not self.command_object:
 			raise CTDConnectionError("Unable to wake CTD or determine its type. There could be a connection error or this is currently plugged into an unsupported model")
