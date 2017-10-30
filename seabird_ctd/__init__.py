@@ -37,9 +37,10 @@ except:
 	logging.warning("Unable to load a required module for interrupt queue. Can be ignored if not using RabbitMQ, but this message is unusual regardless.")
 
 class SBE37(object):
-	def __init__(self):
+	def __init__(self, main_ctd):
 		self.max_samples = 3655394  # needs verification. This is just a guess based on SBE39
-		self.keys = ("temperature", "pressure", "datetime")
+		self.keys = ("pressure", "conductivity", "temperature", "salinity", "datetime")
+		self.ctd = main_ctd
 
 	def set_datetime(self):
 		dt = datetime.datetime.now(timezone.utc)
@@ -65,12 +66,23 @@ class SBE37(object):
 
 		return_dict["sample_number"] = status_message[3].split(", ")[0].split(" = ")[1].replace(" ", "")
 		return_dict["is_sampling"] = True if status_message[4] == "logging data" else False
+		return_dict["salinity_output"] = True if "output salinity" in status_message else False
 		return return_dict
 
+	def record_regex(self):
+		if self.ctd.salinity_output:
+			salinity_insert = "\s+(?P<salinity>?\d+\.\d+),"
+		else:
+			salinity_insert = ""
+
+		self.regex = "(?P<temperature>-?\d+\.\d+),\s+(?P<pressure>-?\d+\.\d+),"+salinity_insert+"\s+(?P<datetime>\d+\s\w+\s\d{4},\s\d{2}:\d{2}:\d{2})"
+		return self.regex
+
 class SBE39(object):
-	def __init__(self):
+	def __init__(self, main_ctd):
 		self.max_samples = 3655394
 		self.keys = ("temperature", "pressure", "datetime")
+		self.ctd = main_ctd
 
 	def set_datetime(self):
 		dt = datetime.datetime.now(timezone.utc)
@@ -99,6 +111,7 @@ class SBE39(object):
 
 supported_ctds = {
 	"SBE 37": "SBE37",
+	"SBE37S": "SBE37",
 	"SBE 39": "SBE39"
 }  # name the instrument will report, then class name. could also do this with 2-tuples.
 
@@ -154,6 +167,7 @@ class CTD(object):
 		self.lithium_voltage = None
 		self.sample_number = None
 		self.is_sampling = None
+		self.salinity_output = None
 
 		# INTERNAL FLAGS AND INFO
 		self.rabbitmq_server = None
