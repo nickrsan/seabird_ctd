@@ -36,7 +36,10 @@ except:
 	interrupt = None
 	logging.warning("Unable to load a required module for interrupt queue. Can be ignored if not using RabbitMQ, but this message is unusual regardless.")
 
-class SBE37(object):
+class SBE37S(object):
+	"""
+		Handles the SBE37S commands
+	"""
 	def __init__(self, main_ctd):
 		self.max_samples = 3655394  # needs verification. This is just a guess based on SBE39
 		self.keys = ("pressure", "conductivity", "temperature", "salinity", "datetime")
@@ -70,6 +73,12 @@ class SBE37(object):
 		return return_dict
 
 	def record_regex(self):
+		"""
+			Handles generation of the regex for the data records. If salinity output is turned on, handles that correctly.
+			STILL TO DO - handle other optional values, such as sound velocity - what happens if sound velocity is on,
+			but salinity is off, or if both are on?
+		:return:
+		"""
 		if self.ctd.salinity_output:
 			salinity_insert = "\s+(?P<salinity>?\d+\.\d+),"
 		else:
@@ -110,8 +119,7 @@ class SBE39(object):
 		return return_dict
 
 supported_ctds = {
-	"SBE 37": "SBE37",
-	"SBE37S": "SBE37",
+	"SBE37S": "SBE37S",
 	"SBE 39": "SBE39"
 }  # name the instrument will report, then class name. could also do this with 2-tuples.
 
@@ -515,6 +523,15 @@ class CTD(object):
 			self.handler(records)  # Call the provided handler function to do whatever the caller wants to do with the data
 
 	def find_and_insert_records(self, data):
+		"""
+			Given the parsing regex defined in the command object for this CTD, runs it and returns a list of dicts
+			containing sampled values. The dict will always have the keys defined in the command object's "keys" attribute.
+			This varies model to model, so your code may need to check for keys, depending. In the event of values that
+			are not always enabled (like salinity, or sound velocity), the keys are still present, but set to None if
+			those values are not enabled.
+		:param data:
+		:return:
+		"""
 		records = []
 		for element in data:
 			matches = re.search(self.command_object.record_regex(), element)
@@ -522,27 +539,15 @@ class CTD(object):
 				continue
 
 			new_model = {}
-			if "temperature" in self.command_object.keys:
-				new_model["temperature"] = matches.group("temperature")
-			else:
-				new_model["temperature"] = None
-
-			if "pressure" in self.command_object.keys:
-				new_model["pressure"] = matches.group("pressure")
-			else:
-				new_model["pressure"] = None
-
-			if "conductivity" in self.command_object.keys:
-				new_model["conductivity"] = matches.group("conductivity")
-			else:
-				new_model["conductivity"] = None
-
-			if "datetime" in self.command_object.keys:
-				dt_object = datetime.datetime.strptime(str(matches.group("datetime")), "%d %b %Y, %H:%M:%S")
-				dt_aware = pytz.utc.localize(dt_object)
-				new_model["datetime"] = dt_aware
-			else:
-				new_model["datetime"] = None
+			for key in self.command_object.keys:
+				try:
+					value = matches.group(key)
+					if key == "datetime":
+						dt_object = datetime.datetime.strptime(str(value), "%d %b %Y, %H:%M:%S")
+						value = pytz.utc.localize(dt_object)
+					new_model[key] = value
+				except IndexError:
+					new_model[key] = None  # it just means that item isn't supported or enabled on this sample
 
 			records.append(new_model)
 
