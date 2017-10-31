@@ -60,8 +60,8 @@ class SBE37S(object):
 
 	def parse_status(self, status_message):
 		return_dict = {}
-		return_dict["full_model"] = status_message[1].split(" ")[0]
-		return_dict["serial_number"] = status_message[1].split(" ")[4]
+		return_dict["full_model"] = status_message[1].split(" ")[0]  # verified
+		return_dict["serial_number"] = status_message[1].split(" ")[4]  # verified
 
 		voltages = re.match("vMain\s+=\s+(\d+\.\d+),\s+vLith\s+=\s+(\d+\.\d+)", status_message[2])
 		return_dict["battery_voltage"] = voltages.group(0)
@@ -262,6 +262,8 @@ class CTD(object):
 				return self.send_command(command, length_to_read)
 			else:
 				return response
+		else:
+			return []  # should return an empty list if there's nothing in waiting
 
 	def _read_all(self):
 		return self.send_command(command=None, length_to_read="ALL")
