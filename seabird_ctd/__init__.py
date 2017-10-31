@@ -144,6 +144,8 @@ class CTD(object):
 
 		"""
 
+		self.setup_complete = False  # we'll use this if setup fails so we can appropriately close the object. If it fails before it's complete, we won't send a QS
+
 		if COM_port is None:
 			if "SEABIRD_CTD_PORT" in os.environ:
 				COM_port = os.environ["SEABIRD_CTD_PORT"]
@@ -191,6 +193,7 @@ class CTD(object):
 		except:  # if ANY exception occurs through here, close the ctd object and then reraise the exception so that we're at a clean state
 			self.ctd.close()
 			raise
+		self.setup_complete = True
 
 	@property
 	def battery_voltage(self):
@@ -249,7 +252,7 @@ class CTD(object):
 			if length_to_read == "ALL":
 				data = b""
 				while self.ctd.in_waiting > 0:
-					new_data = self.ctd.read(self.ctd.in_waiting)  # if we're expecting quite a lot, then keep reading until we get nothing
+					new_data = self.ctd.read(self.ctd.in_waiting)  # if we're expecting quite a lot, then keep reading until we get nothing - read the exact amount available so it's faster and we don't hit timeout
 					data += new_data
 			elif length_to_read is None:
 				return  # for some commands, such as QS, we want to not attempt a read after sending
@@ -324,6 +327,8 @@ class CTD(object):
 			self.last_status = datetime.datetime.now(timezone.utc)
 
 			self.log.info(status)
+		except IndexError:
+			raise CTDConfigurationError("Unable to parse status message. If this is on a new model of CTD for this package, this may be expected, but needs fixing. Here's what the 'DS' command returned {}")
 		except:  # no matter what exception is raised, we'll most likely want to roll through this
 			if self.last_status is not None:  # if this isn't our first check of the status, then warn, but keep going
 				self.log.warning("Failed to retrieve or parse status message. Proceeding, but some information, such as battery voltage, may be out of date. CTD response was {}. Error given was {}".format(status, traceback.format_exc()))
@@ -594,9 +599,11 @@ class CTD(object):
 		:return:
 		"""
 
-		self.sleep()
-		self.ctd.close()
-		self.ctd = None
+		if self.setup_complete:  # only send a sleep command if setup finished because if it hasn't we won't be able to send the command
+			self.sleep()
+
+		self.ctd.close()  # now close the actual serial connection so it's available again
+		self.ctd = None  # and zero it out on this object so that if .close() is manually called, tests for if the connection is open work correctly.
 
 	def __del__(self):
 		""""
