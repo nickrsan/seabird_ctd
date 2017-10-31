@@ -68,7 +68,7 @@ class SBE37S(object):
 		return_dict["lithium_voltage"] = voltages.group(2)
 
 		return_dict["sample_number"] = status_message[3].split(", ")[0].split(" = ")[1].replace(" ", "")
-		return_dict["is_sampling"] = True if status_message[4] == "logging data" else False
+		return_dict["is_sampling"] = True if status_message[4] == "logging" else False
 		return_dict["salinity_output"] = True if "output salinity" in status_message else False
 		return return_dict
 
@@ -80,11 +80,11 @@ class SBE37S(object):
 		:return:
 		"""
 		if self.ctd.salinity_output:
-			salinity_insert = "\s+(?P<salinity>?\d+\.\d+),"
+			salinity_insert = "\s+(?P<salinity>\d+\.\d+),"
 		else:
 			salinity_insert = ""
 
-		self.regex = "(?P<temperature>-?\d+\.\d+),\s+(?P<pressure>-?\d+\.\d+),"+salinity_insert+"\s+(?P<datetime>\d+\s\w+\s\d{4},\s\d{2}:\d{2}:\d{2})"
+		self.regex = "(?P<pressure>-?\d+\.\d+),\s+(?P<conductivity>-?\d+\.\d+),\s+(?P<temperature>-?\d+\.\d+),"+salinity_insert+"\s+(?P<datetime>\d+\s\w+\s\d{4},\s\d{2}:\d{2}:\d{2})"
 		return self.regex
 
 class SBE39(object):
@@ -162,15 +162,15 @@ class CTD(object):
 
 		self.ctd = serial.Serial(COM_port, baud, timeout=timeout)
 		self.baud = baud
-		self.read_safety_delay = 100/self.baud 
+		self.read_safety_delay = 120/self.baud 
 		# read_safety_delay is kind of a weird one. We only read as many characters as we know are on the pipe in order to avoid having to wait for the
 		# timeout on every read - which significantly, and unnecessarily prolongs reads. *But* when we're reading while data is being transferred, we
 		# read quite a bit faster than data is transferred in, so we can be falsely told that there aren't any characters waiting, only because they're
-		# still coming in on the serial line. So, after each read, we have a short sleep of 100/baudrate so that there is time for a new character to
-		# register as being available and the read code decides to do another read. The value 100/baudrate isn't *super* scientific and might be able
+		# still coming in on the serial line. So, after each read, we have a short sleep of 120/baudrate so that there is time for a new character to
+		# register as being available and the read code decides to do another read. The value 120/baudrate isn't *super* scientific and might be able
 		# to be refined. Theoretically, at a minimum, we'd need 8/baudrate seconds to receive a full byte of information on the line. I was going to
 		# just double it for a safe margin, but that wasn't enough. We still got mixed up commands and responses even as high as 50/baudrate. So, I
-		# doubled that, and it seems to work reliably. If there are still problems/race conditions around reading data, upping the numerator here
+		# doubled that, and added a bit and it seems to work reliably. If there are still problems/race conditions around reading data, upping the numerator here
 		# may help solve them. Note that even for the slowest baudrates, this is still shorter than waiting for the timeout to hit because we wait
 		# the minimum amount of time to ensure no new data is currently being transmitted.
 		
@@ -255,6 +255,7 @@ class CTD(object):
 
 	def send_command(self, command=None, length_to_read="ALL"):
 		if command:
+			self.log.debug("Sending '{}'".format(command))
 			self.ctd.write(six.b('{}\r\n'.format(command)))  # doesn't seem to work unless we pass it a windows line ending. Sends command, but no results
 			time.sleep(1)  # was this actually necessary? Try removing it.
 
@@ -424,7 +425,7 @@ class CTD(object):
 		if not self.is_sampling:  # will be updated if we successfully stop sampling
 			self.send_command(self.command_object.sample_interval(interval), length_to_read=None)  # set the interval to sample at
 			self.send_command("TXREALTIME={}".format(realtime), length_to_read=None)  # set the interval to sample at
-			self.send_command("STARTNOW", length_to_read=100)  # start sampling - we need to read to clear the buffer
+			self.send_command("STARTNOW", length_to_read="ALL")  # start sampling - we need to read to clear the buffer
 			self.send_command("\r\n", length_to_read=None)  # send a newline so that we get a new prompt again
 			self.status()  # make sure the status data is up to date. Doing it this way ratehr than setting manually so that if it failed for some reason, the object would still be correct
 							# if is_sampling doesn't get updated here, data reading won't work correctly, so this is important
@@ -557,8 +558,11 @@ class CTD(object):
 		:param data:
 		:return:
 		"""
+		
+		self.log.debug("Searching for records in {}".format(data))
 		records = []
 		for element in data:
+			self.log.debug("Trying to match '{}' against regex '{}'".format(element, self.command_object.record_regex()))
 			matches = re.search(self.command_object.record_regex(), element)
 			if matches is None:
 				continue
