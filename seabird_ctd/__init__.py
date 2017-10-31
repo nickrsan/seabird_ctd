@@ -535,7 +535,11 @@ class CTD(object):
 		data = self._read_all()  # this will automatically check for data
 
 		if (datetime.datetime.now(timezone.utc) - self.last_status).total_seconds() > 3600:  # if it's been more than an hour since we checked the status, refresh it so we get new battery stats
-			self.status()  # this can be run while the device is logging
+			self.wake()
+			try:
+				self.status()  # this can be run while the device is logging
+			except IndexError:
+				self.log.warning("Unable to update status information - this is likely fine, but the logger state may not be current.")
 
 	def check_data_for_records(self, data):
 		records = self.find_and_insert_records(data)
@@ -616,8 +620,11 @@ class CTD(object):
 		:return:
 		"""
 
-		if self.setup_complete:  # only send a sleep command if setup finished because if it hasn't we won't be able to send the command
-			self.sleep()
+		try:
+			if self.setup_complete:  # only send a sleep command if setup finished because if it hasn't we won't be able to send the command
+				self.sleep()
+		except NameError:  # raised when trying to log while closing
+			pass  # ignore logging messages during deletion
 
 		self.ctd.close()  # now close the actual serial connection so it's available again
 		self.ctd = None  # and zero it out on this object so that if .close() is manually called, tests for if the connection is open work correctly.
