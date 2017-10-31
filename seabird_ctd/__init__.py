@@ -64,8 +64,8 @@ class SBE37S(object):
 		return_dict["serial_number"] = status_message[1].split(" ")[4]  # verified
 
 		voltages = re.match("vMain\s+=\s+(\d+\.\d+),\s+vLith\s+=\s+(\d+\.\d+)", status_message[2])
-		return_dict["battery_voltage"] = voltages.group(0)
-		return_dict["lithium_voltage"] = voltages.group(1)
+		return_dict["battery_voltage"] = voltages.group(1)  # group zero is whole match, so start with group 1
+		return_dict["lithium_voltage"] = voltages.group(2)
 
 		return_dict["sample_number"] = status_message[3].split(", ")[0].split(" = ")[1].replace(" ", "")
 		return_dict["is_sampling"] = True if status_message[4] == "logging data" else False
@@ -161,7 +161,19 @@ class CTD(object):
 		self.com_port = COM_port
 
 		self.ctd = serial.Serial(COM_port, baud, timeout=timeout)
-
+		self.baud = baud
+		self.read_safety_delay = 100/self.baud 
+		# read_safety_delay is kind of a weird one. We only read as many characters as we know are on the pipe in order to avoid having to wait for the
+		# timeout on every read - which significantly, and unnecessarily prolongs reads. *But* when we're reading while data is being transferred, we
+		# read quite a bit faster than data is transferred in, so we can be falsely told that there aren't any characters waiting, only because they're
+		# still coming in on the serial line. So, after each read, we have a short sleep of 100/baudrate so that there is time for a new character to
+		# register as being available and the read code decides to do another read. The value 100/baudrate isn't *super* scientific and might be able
+		# to be refined. Theoretically, at a minimum, we'd need 8/baudrate seconds to receive a full byte of information on the line. I was going to
+		# just double it for a safe margin, but that wasn't enough. We still got mixed up commands and responses even as high as 50/baudrate. So, I
+		# doubled that, and it seems to work reliably. If there are still problems/race conditions around reading data, upping the numerator here
+		# may help solve them. Note that even for the slowest baudrates, this is still shorter than waiting for the timeout to hit because we wait
+		# the minimum amount of time to ensure no new data is currently being transmitted.
+		
 		try:
 			time.sleep(setup_delay)  # give it time to init
 
@@ -254,6 +266,7 @@ class CTD(object):
 				while self.ctd.in_waiting > 0:
 					new_data = self.ctd.read(self.ctd.in_waiting)  # if we're expecting quite a lot, then keep reading until we get nothing - read the exact amount available so it's faster and we don't hit timeout
 					data += new_data
+					time.sleep(self.read_safety_delay)  # BEFORE CHANGING THIS LINE, check the comments after the definition of read_safety_delay in __init__
 			elif length_to_read is None:
 				return  # for some commands, such as QS, we want to not attempt a read after sending
 			else:
@@ -328,7 +341,7 @@ class CTD(object):
 
 			self.log.info(status)
 		except IndexError:
-			raise CTDConfigurationError("Unable to parse status message. If this is on a new model of CTD for this package, this may be expected, but needs fixing. Here's what the 'DS' command returned {}")
+			raise CTDConfigurationError("Unable to parse status message. If this is on a new model of CTD for this package, this may be expected, but needs fixing. Here's what the 'DS' command returned {}".format(status))
 		except:  # no matter what exception is raised, we'll most likely want to roll through this
 			if self.last_status is not None:  # if this isn't our first check of the status, then warn, but keep going
 				self.log.warning("Failed to retrieve or parse status message. Proceeding, but some information, such as battery voltage, may be out of date. CTD response was {}. Error given was {}".format(status, traceback.format_exc()))
