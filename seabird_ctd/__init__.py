@@ -159,33 +159,38 @@ class CTD(object):
 		self.com_port = COM_port
 
 		self.ctd = serial.Serial(COM_port, baud, timeout=timeout)
-		time.sleep(setup_delay)  # give it time to init
 
-		self.command_object = None
-		self.handler = None  # will be set if self.listen is called
-		self.held_records = []
+		try:
+			time.sleep(setup_delay)  # give it time to init
 
-		self.model = None  # to be set later
+			self.command_object = None
+			self.handler = None  # will be set if self.listen is called
+			self.held_records = []
 
-		# STATUS INFO TO BE SET BY .status()
-		self.full_model = None
-		self.serial_number = None
-		self._battery_voltage = None  # actual battery voltage is function so we can keep track of changes
-		self._original_voltage = None
-		self.lithium_voltage = None
-		self.sample_number = None
-		self.is_sampling = None
-		self.salinity_output = None
+			self.model = None  # to be set later
 
-		# INTERNAL FLAGS AND INFO
-		self.rabbitmq_server = None
-		self._stop_monitoring = False  # a flag that will be monitored to determine if we should stop checking for commands
-		self._close_connection = False  # same as previous
+			# STATUS INFO TO BE SET BY .status()
+			self.full_model = None
+			self.serial_number = None
+			self._battery_voltage = None  # actual battery voltage is function so we can keep track of changes
+			self._original_voltage = None
+			self.lithium_voltage = None
+			self.sample_number = None
+			self.is_sampling = None
+			self.salinity_output = None
 
-		self.last_status = None  # will be set each time status is run
-		self.determine_ctd_model()
-		if self.last_status is None:  # we check it here because determine_ctd_model might run it if it needs to. Don't waste time doubling up.
-			self.status()  # will fill some fields in so we know what sample it's on, etc
+			# INTERNAL FLAGS AND INFO
+			self.rabbitmq_server = None
+			self._stop_monitoring = False  # a flag that will be monitored to determine if we should stop checking for commands
+			self._close_connection = False  # same as previous
+
+			self.last_status = None  # will be set each time status is run
+			self.determine_ctd_model()
+			if self.last_status is None:  # we check it here because determine_ctd_model might run it if it needs to. Don't waste time doubling up.
+				self.status()  # will fill some fields in so we know what sample it's on, etc
+		except:  # if ANY exception occurs through here, close the ctd object and then reraise the exception so that we're at a clean state
+			self.ctd.close()
+			raise
 
 	@property
 	def battery_voltage(self):
@@ -596,9 +601,8 @@ class CTD(object):
 	def __del__(self):
 		""""
 			Check if the CTD is still open. If the user called close on their own, then this will create an error.
-
 		"""
-		if self.ctd:
+		if hasattr(self, "ctd") and self.ctd:  # if we've already defined the ctd attribute and it's still valid (not manually closed, etc)
 			self.close()
 
 def interrupt_checker(server, username, password, vhost, queue, interval):
