@@ -162,7 +162,8 @@ class CTD(object):
 
 		self.ctd = serial.Serial(COM_port, baud, timeout=timeout)
 		self.baud = baud
-		self.read_safety_delay = 120/self.baud 
+		self.timeout = timeout
+		self.read_safety_delay = 120/self.baud
 		# read_safety_delay is kind of a weird one. We only read as many characters as we know are on the pipe in order to avoid having to wait for the
 		# timeout on every read - which significantly, and unnecessarily prolongs reads. *But* when we're reading while data is being transferred, we
 		# read quite a bit faster than data is transferred in, so we can be falsely told that there aren't any characters waiting, only because they're
@@ -525,7 +526,10 @@ class CTD(object):
 
 		else:  # if no interrupt loop
 			while self.check_interrupt() is False:
-				self.read_records()
+				try:
+					self.read_records()
+				except UnicodeDecodeError:
+					self.recover()  # UnicodeDecodeError most likely means a line interruption caused invalid data. Try to recover the connection
 				time.sleep(interval)
 
 	def read_records(self):
@@ -585,6 +589,20 @@ class CTD(object):
 			records.append(new_model)
 
 		return records
+
+	def recover(self):
+		"""
+			This is for using if the line is interrupted by something, but the script stays running. In our production,
+			if power goes out to an intermediate set of devices, the CTD can go down. This method closes the existing
+			ctd connection, reopens it, tries to reestablish communication with the device. Triggered if we get a
+			UnicodeDecodeError parsing the data.
+		:return:
+		"""
+
+		self.ctd.close()
+		self.ctd = serial.Serial(self.com_port, self.baud, timeout=self.timeout)
+		self.wake()
+		time.sleep(2)  # give it a moment after trying to recover
 
 	def stop_autosample(self):
 		self.log.info("Stopping existing autosampling")
