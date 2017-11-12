@@ -137,7 +137,7 @@ class CTDUnsupportedError(BaseException):
 
 
 class CTD(object):
-	def __init__(self, COM_port=None, baud=9600, timeout=5, setup_delay=2):
+	def __init__(self, COM_port=None, baud=9600, timeout=5, setup_delay=2, wait_numerator=200):
 		"""
 		If COM_port is not provided, checks for an environment variable named SEABIRD_CTD_PORT. Otherwise raises
 		CTDConnectionError
@@ -163,7 +163,7 @@ class CTD(object):
 		self.ctd = serial.Serial(COM_port, baud, timeout=timeout)
 		self.baud = baud
 		self.timeout = timeout
-		self.read_safety_delay = 120/self.baud
+		self.read_safety_delay = wait_numerator/self.baud
 		# read_safety_delay is kind of a weird one. We only read as many characters as we know are on the pipe in order to avoid having to wait for the
 		# timeout on every read - which significantly, and unnecessarily prolongs reads. *But* when we're reading while data is being transferred, we
 		# read quite a bit faster than data is transferred in, so we can be falsely told that there aren't any characters waiting, only because they're
