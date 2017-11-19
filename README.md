@@ -146,4 +146,12 @@ command to the device and closes the serial connection.
 CTDs have slightly different command styles and syntaxes. Until further documentation
 is written, the best way to see how this is handled is to take a look at
 the objects for each CTD in the code. They define specific parsing information
-and command syntaxes for the CTDs.
+and command syntax for the CTDs.
+
+## Changelog
+### 0.2.4.0
+* Added unit test for autologging
+* Added support for SBE39 firmware version 1.5, which has slightly different behavior from later versions
+* Added `send_raw` argument to support dumping the entire raw response from the CTD to a file
+* Began module for simulating outputs of unavailable models for future testing
+* Added some handlers to command objects to allow them to specify certain behaviors and parsing

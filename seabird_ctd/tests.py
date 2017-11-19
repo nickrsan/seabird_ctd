@@ -1,11 +1,17 @@
 import unittest
+import logging
+import os
 
 import seabird_ctd
 
+from seabird_ctd import local_test_settings  # machine-specific file with attributes COM_POT and BAUD_RATE
+
+log = logging.getLogger("seabird_ctd")
+logging.basicConfig(level=logging.DEBUG)
 
 class CTDTest(unittest.TestCase):
 	def setUp(self):
-		self.ctd = seabird_ctd.CTD(baud=4800)
+		self.ctd = seabird_ctd.CTD(local_test_settings.COM_PORT, baud=local_test_settings.BAUD_RATE)
 
 	def test_data_read(self):
 
@@ -40,6 +46,28 @@ class CTDTest(unittest.TestCase):
 		# get the results of the command.
 		pass
 
+class BaseCTDTest(unittest.TestCase):  # this could be subclassed for specific units - especially setup with baud settings, etc
+	def setUp(self):
+		self.raw_ctd_file = open(os.path.join(os.path.split(os.path.abspath(__file__))[0], "test_dumps", "SBE3915.log"), 'wb')
+		self.ctd = seabird_ctd.CTD(local_test_settings.COM_PORT, baud=local_test_settings.BAUD_RATE, send_raw=self.raw_ctd_file)
+
+	def test_autosample(self):
+		self.ctd.stop_autosample()
+		self.ctd.set_datetime()
+		self.got_a_record = False  # we need this so that we can fail if no records were returned at all, or if the records don't have tdata
+
+		def handler(records):
+			for record in records:
+				self.got_a_record = True
+				self.assertLess(float(record["temperature"]), 100)
+				self.assertGreater(float(record["temperature"]), -7.5)  # use a temperature bounds check as a way to check for data
+
+		self.ctd.start_autosample(30, handler=handler, no_stop=False, max_iterations=4)
+
+		self.assertTrue(self.got_a_record)
+
+	def __del__(self):
+		self.raw_ctd_file.close()
 
 if __name__ == "__main__":
 	unittest.main()
