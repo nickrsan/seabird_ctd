@@ -7,6 +7,8 @@ class CTDCommandObject(object):
 		Just an empty class that can be subclassed so that any isinstance checks would work
 	"""
 
+	operation_wait_times = {}  # keys are for commands - if there is a key for a command here, it waits that many seconds for that operation before trying to read
+
 	def clean_status(self, status):
 		blank_lines = ["?cmd S>", "S>", ""]
 		return [line for line in status if line not in blank_lines]  # remove the bad items from the list that confuse the parsers
@@ -172,6 +174,7 @@ class SBE19plus(CTDCommandObject):
 		self.operation_wait_time = 2
 		#self.max_samples = 230000
 		self.supports_commands_while_logging = True
+		self.operation_wait_times["DS"] = 5
 
 	def set_datetime(self):
 		dt = datetime.datetime.now(timezone.utc)
@@ -219,6 +222,8 @@ supported_ctds = {
 	"SBE 39": SBE39,
 	"SBE39 ": SBE3915,
 	"SBE39 1.5": SBE3915,
+	"SBE391.5": SBE3915,
 	"SeacatPlus V 1.6": SBE19plus,
+	"SeacatPlusV1.6": SBE19plus,
 	"SeacatPlus": SBE19plus,
 }  # name the instrument will report, then class name. could also do this with 2-tuples.

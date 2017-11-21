@@ -179,13 +179,18 @@ class CTD(object):
 					self.model = line
 
 			self.log.debug("Confirming model determination")
-			ds = self.send_command("DS")
+			ds = self.send_command("DS", length_to_read=1000)  # basically, force it to hit a timeout - without a command object, we don't know how long the DS will take - some models take many seconds to get the details
 			if not self.command_object:  # if we didn't get it from startup, issue a DS to determine it and peel it off the first part
 				self.log.debug("CTD responded with {}".format(ds))
-				self.model = ds[1][:6]  # it'll be the first 6 characters of the DS message
+				ds_parts = ds[1].split(" ")
+				self.model = ds_parts[0]  # get the first full word
 				self.log.debug("Best guess for model is {}".format(self.model))
 
-				if self.model not in supported_ctds:
+				for i in enumerate(ds_parts):  # basically, keep trying to combine the parts of the DS first line untiil we either get a model number that we have, or we run out of lines
+					self.model = "".join(ds_parts[:i])
+					if self.model in supported_ctds:
+						break
+				else:
 					raise CTDUnsupportedError("Model '{}' is not supported. If this doesn't match the model you have, then the model information did not correctly parse. You may try again.".format(self.model))
 
 				self.command_object = supported_ctds[self.model](main_ctd=self)
@@ -201,9 +206,10 @@ class CTD(object):
 
 	def send_command(self, command=None, length_to_read="ALL"):
 		if command:
+			sleep_time = self.command_object.operation_wait_times[command] if self.command_object and command in self.command_object.operation_wait_times else 2
 			self.log.debug("Sending '{}'".format(command))
 			self.ctd.write(six.b('{}\r\n'.format(command)))  # doesn't seem to work unless we pass it a windows line ending. Sends command, but no results
-			time.sleep(2)  # make sure it waits a bit after the command before checking for a response - might be able to speed this up with testing
+			time.sleep(sleep_time)  # make sure it waits a bit after the command before checking for a response - might be able to speed this up with testing
 
 		self.log.debug("{} bytes in waiting".format(self.ctd.in_waiting))
 		if self.ctd.in_waiting > 0:  # if the CTD sent data and we haven't read it yet

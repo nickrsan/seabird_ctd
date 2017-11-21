@@ -48,7 +48,7 @@ class CTDTest(unittest.TestCase):
 
 class BaseCTDTest(unittest.TestCase):  # this could be subclassed for specific units - especially setup with baud settings, etc
 	def setUp(self):
-		self.raw_ctd_file = open(os.path.join(os.path.split(os.path.abspath(__file__))[0], "test_dumps", "SBE3915.log"), 'wb')
+		self.raw_ctd_file = open(os.path.join(os.path.split(os.path.abspath(__file__))[0], "test_dumps", "SBE19plusv1.log"), 'wb')
 		self.ctd = seabird_ctd.CTD(local_test_settings.COM_PORT, baud=local_test_settings.BAUD_RATE, send_raw=self.raw_ctd_file)
 
 	def test_autosample(self):
