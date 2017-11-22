@@ -62,6 +62,16 @@ class BaseCTDTest(unittest.TestCase):  # this could be subclassed for specific u
 				self.assertLess(float(record["temperature"]), 100)
 				self.assertGreater(float(record["temperature"]), -7.5)  # use a temperature bounds check as a way to check for data
 
+				self.assertLess(float(record["pressure"]), 30)  # this assumes we're not testing against a pressure device that's very deep
+				self.assertGreater(float(record["pressure"]), -7.5)
+
+				# it's possible we'd want to confirm we have these, but we should force it in the test code, not the CTD code, because parsing failures could lead us astray
+				self.assertLess(float(record["salinity"]), 100)  # Ocean salinity around 34 ppm - 100 is to give it a lot of room for testing elsewhere
+				self.assertGreater(float(record["salinity"]), -0.01)
+
+				self.assertLess(float(record["conductivity"]), 10)
+				self.assertGreater(float(record["temperature"]), 0)
+
 		self.ctd.start_autosample(30, handler=handler, no_stop=False, max_iterations=4)
 
 		self.assertTrue(self.got_a_record)

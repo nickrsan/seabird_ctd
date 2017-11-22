@@ -149,6 +149,12 @@ the objects for each CTD in the code. They define specific parsing information
 and command syntax for the CTDs.
 
 ## Changelog
+
+### 0.2.4.1
+* Added support for SBE19Plus - Seacat
+* Changed how model is determined to be more robust
+* Added "operation_wait_times" dict property to command objects to specify wait times for specific commands to complete
+
 ### 0.2.4.0
 * Added unit test for autologging
 * Added support for SBE39 firmware version 1.5, which has slightly different behavior from later versions

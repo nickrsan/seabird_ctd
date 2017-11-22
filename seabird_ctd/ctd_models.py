@@ -10,8 +10,8 @@ class CTDCommandObject(object):
 	operation_wait_times = {}  # keys are for commands - if there is a key for a command here, it waits that many seconds for that operation before trying to read
 
 	def clean_status(self, status):
-		blank_lines = ["?cmd S>", "S>", ""]
-		return [line for line in status if line not in blank_lines]  # remove the bad items from the list that confuse the parsers
+		remove_lines = ["?cmd S>", "S>", "DS", ""]
+		return [line for line in status if line not in remove_lines]  # remove the bad items from the list that confuse the parsers
 
 	def clean_response(self, response):
 		return response
@@ -48,7 +48,6 @@ class SBE37S(CTDCommandObject):
 		]
 
 	def parse_status(self, status_message):
-		status_message = self.clean_status(status_message)
 		return_dict = {}
 		return_dict["full_model"] = status_message[1].split(" ")[0]  # verified
 		return_dict["serial_number"] = status_message[1].split(" ")[4]  # verified
@@ -123,7 +122,6 @@ class SBE39(CTDCommandObject):
 		return self.regex
 
 	def parse_status(self, status_message):
-		status_message = self.clean_status(status_message)
 		return_dict = {}
 		return_dict["full_model"] = status_message[1].split("   ")[0]
 		return_dict["serial_number"] = status_message[1].split("   ")[1]
@@ -173,7 +171,7 @@ class SBE19plus(CTDCommandObject):
 	def setup(self):
 		self.operation_wait_time = 2
 		#self.max_samples = 230000
-		self.supports_commands_while_logging = True
+		self.supports_commands_while_logging = False
 		self.operation_wait_times["DS"] = 5
 
 	def set_datetime(self):
@@ -189,16 +187,18 @@ class SBE19plus(CTDCommandObject):
 	def parse_status(self, status_message):
 		status_message = self.clean_status(status_message)
 		return_dict = {}
-		return_dict["full_model"] = status_message[1].split(" ")[0]
-		return_dict["serial_number"] = status_message[1].split(" ")[4]
 
-		voltages = re.match("vbatt\s+=\s+(\d+\.\d+),\s+vlith\s+=\s+(\d+\.\d+)", status_message[2])
+		model_parts = re.match("^(.+?)\s+SERIAL\s+NO.\s+(\d+)\s+.*$", status_message[0])
+		return_dict["full_model"] = model_parts.group(1)
+		return_dict["serial_number"] = model_parts.group(2)
+
+		voltages = re.match("vbatt\s+=\s+(\d+\.\d+),\s+vlith\s+=\s+(\d+\.\d+)", status_message[1])
 		return_dict["battery_voltage"] = voltages.group(1)  # group zero is whole match, so start with group 1
 		return_dict["lithium_voltage"] = voltages.group(2)
 
-		return_dict["sample_number"] = status_message[8].split(", ")[0].split(" = ")[1].replace(" ", "")
-		return_dict["is_sampling"] = True if status_message[6] == "status = logging" else False
-		return_dict["salinity_output"] = True if "output salinity" in status_message else False
+		return_dict["sample_number"] = status_message[7].split(", ")[0].split(" = ")[1].replace(" ", "")
+		return_dict["is_sampling"] = True if status_message[5] == "status = logging" else False
+		return_dict["salinity_output"] = True if status_message[15].split(" ")[3] == "yes," else False
 		return return_dict
 
 	def record_regex(self):
@@ -213,7 +213,7 @@ class SBE19plus(CTDCommandObject):
 		else:
 			salinity_insert = ""
 
-		self.regex = "(?P<temperature>-?\d+\.\d+),\s+(?P<conductivity>-?\d+\.\d+),\s+(?P<pressure>-?\d+\.\d+),"+salinity_insert+"\s+(?P<datetime>\d+\s\w+\s\d{4},\s\d{2}:\d{2}:\d{2})"
+		self.regex = "(?P<temperature>-?\d+\.\d+),\s+(?P<conductivity>-?\d+\.\d+),\s+(?P<pressure>-?\d+\.\d+),"+salinity_insert+"\s+.*?(?P<datetime>\d+\s\w+\s\d{4},\s\d{2}:\d{2}:\d{2})"
 		return self.regex
 
 

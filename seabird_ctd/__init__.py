@@ -183,12 +183,11 @@ class CTD(object):
 			if not self.command_object:  # if we didn't get it from startup, issue a DS to determine it and peel it off the first part
 				self.log.debug("CTD responded with {}".format(ds))
 				ds_parts = ds[1].split(" ")
-				self.model = ds_parts[0]  # get the first full word
-				self.log.debug("Best guess for model is {}".format(self.model))
 
-				for i in enumerate(ds_parts):  # basically, keep trying to combine the parts of the DS first line untiil we either get a model number that we have, or we run out of lines
+				for i, value in enumerate(ds_parts):  # basically, keep trying to combine the parts of the DS first line untiil we either get a model number that we have, or we run out of lines
 					self.model = "".join(ds_parts[:i])
 					if self.model in supported_ctds:
+						self.log.debug("Best guess for model is {}".format(self.model))
 						break
 				else:
 					raise CTDUnsupportedError("Model '{}' is not supported. If this doesn't match the model you have, then the model information did not correctly parse. You may try again.".format(self.model))
@@ -294,14 +293,13 @@ class CTD(object):
 		self.send_command("QS", length_to_read=None)
 
 	def wake(self):
-		self.send_command("\r\n", length_to_read=None)  # Send a single character to wake the device, get the response so that we clear the buffer
+		self.send_command("\r\n")  # Send a single character to wake the device, get the response so that we clear the buffer
 
-	def status(self):
+	def status(self, status_parts=None):
 		try:
 			if self.ctd.in_waiting > 0:  # any current waiting characters will make parsing weird.
 				self._read_all()  # clear the input buffer, check for any data in the pipeline
 
-			status_parts = None
 			attempt_count = 0
 			while status_parts is None and attempt_count < 3:  # this logic is to make it try a bit harder to get the status information in certain instances -
 				new_status = self.send_command("DS")
@@ -552,7 +550,7 @@ class CTD(object):
 		return data
 
 	def check_data_for_records(self, data):
-		records = self.find_and_insert_records(data)
+		records = self.find_records(data)
 
 		if not self.handler:  # if it's sampling and we've received records, but not yet configured a handler, hold onto the records until a handler is configured
 			self.held_records += records
@@ -562,7 +560,7 @@ class CTD(object):
 				self.held_records = []
 			self.handler(records)  # Call the provided handler function to do whatever the caller wants to do with the data
 
-	def find_and_insert_records(self, data):
+	def find_records(self, data):
 		"""
 			Given the parsing regex defined in the command object for this CTD, runs it and returns a list of dicts
 			containing sampled values. The dict will always have the keys defined in the command object's "keys" attribute.
