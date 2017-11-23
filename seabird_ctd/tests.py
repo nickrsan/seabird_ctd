@@ -52,8 +52,8 @@ class BaseCTDTest(unittest.TestCase):  # this could be subclassed for specific u
 		self.ctd = seabird_ctd.CTD(local_test_settings.COM_PORT, baud=local_test_settings.BAUD_RATE, send_raw=self.raw_ctd_file)
 
 	def test_autosample(self):
-		self.ctd.stop_autosample()
-		self.ctd.set_datetime()
+		#self.ctd.stop_autosample()
+		#self.ctd.set_datetime()
 		self.got_a_record = False  # we need this so that we can fail if no records were returned at all, or if the records don't have tdata
 
 		def handler(records):
@@ -70,7 +70,7 @@ class BaseCTDTest(unittest.TestCase):  # this could be subclassed for specific u
 				self.assertGreater(float(record["salinity"]), -0.01)
 
 				self.assertLess(float(record["conductivity"]), 10)
-				self.assertGreater(float(record["temperature"]), 0)
+				self.assertGreater(float(record["conductivity"]), 0)
 
 		self.ctd.start_autosample(30, handler=handler, no_stop=False, max_iterations=4)
 

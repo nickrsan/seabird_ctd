@@ -10,6 +10,11 @@ class CTDCommandObject(object):
 	operation_wait_times = {}  # keys are for commands - if there is a key for a command here, it waits that many seconds for that operation before trying to read
 
 	def clean_status(self, status):
+		"""
+			REMINDER: THIS REMOVES *ALL* empty lines, not just leading ones (eg, SBE19plus which has some in the middle)
+		:param status:
+		:return:
+		"""
 		remove_lines = ["?cmd S>", "S>", "DS", ""]
 		return [line for line in status if line not in remove_lines]  # remove the bad items from the list that confuse the parsers
 
@@ -172,7 +177,7 @@ class SBE19plus(CTDCommandObject):
 		self.operation_wait_time = 2
 		#self.max_samples = 230000
 		self.supports_commands_while_logging = False
-		self.operation_wait_times["DS"] = 5
+		self.operation_wait_times["DS"] = 8
 
 	def set_datetime(self):
 		dt = datetime.datetime.now(timezone.utc)
@@ -196,8 +201,8 @@ class SBE19plus(CTDCommandObject):
 		return_dict["battery_voltage"] = voltages.group(1)  # group zero is whole match, so start with group 1
 		return_dict["lithium_voltage"] = voltages.group(2)
 
-		return_dict["sample_number"] = status_message[7].split(", ")[0].split(" = ")[1].replace(" ", "")
-		return_dict["is_sampling"] = True if status_message[5] == "status = logging" else False
+		return_dict["sample_number"] = status_message[6].split(", ")[0].split(" = ")[1].replace(" ", "")
+		return_dict["is_sampling"] = True if status_message[4] == "status = logging" else False
 		return_dict["salinity_output"] = True if status_message[15].split(" ")[3] == "yes," else False
 		return return_dict
 

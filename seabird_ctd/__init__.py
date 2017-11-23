@@ -293,7 +293,7 @@ class CTD(object):
 		self.send_command("QS", length_to_read=None)
 
 	def wake(self):
-		self.send_command("\r\n")  # Send a single character to wake the device, get the response so that we clear the buffer
+		self.send_command("\r\n\r\n")  # Send a single character to wake the device, get the response so that we clear the buffer
 
 	def status(self, status_parts=None):
 		try:
@@ -421,6 +421,8 @@ class CTD(object):
 								# if is_sampling doesn't get updated here, data reading won't work correctly, so this is important
 			else:
 				self.is_sampling = True  # since we can't very easily check that it's sampling for this device, assume it's true
+		else:
+			self.sleep()  # if it's already sampling, be on the safe side and put the device into QS mode now because devices that don't support commands while logging will need this after our startup sequence
 
 		if realtime == "Y":
 			if not handler:  # if they specified realtime data transmission, but didn't provide a handler, abort.
