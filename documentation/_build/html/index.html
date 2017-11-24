@@ -53,8 +53,32 @@ to a CTD while it’s logging and can be extended to support communication with 
 loggers with different capabilities and command descriptions.</p>
 <dl class="class">
 <dt id="seabird_ctd.CTD">
-<em class="property">class </em><code class="descclassname">seabird_ctd.</code><code class="descname">CTD</code><span class="sig-paren">(</span><em>COM_port=None</em>, <em>baud=9600</em>, <em>timeout=5</em>, <em>setup_delay=2</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/seabird_ctd.html#CTD"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#seabird_ctd.CTD" title="Permalink to this definition">¶</a></dt>
-<dd><dl class="attribute">
+<em class="property">class </em><code class="descclassname">seabird_ctd.</code><code class="descname">CTD</code><span class="sig-paren">(</span><em>COM_port=None</em>, <em>baud=9600</em>, <em>timeout=5</em>, <em>setup_delay=2</em>, <em>wait_numerator=200</em>, <em>send_raw=None</em>, <em>debug=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/seabird_ctd.html#CTD"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#seabird_ctd.CTD" title="Permalink to this definition">¶</a></dt>
+<dd><p>If COM_port is not provided, checks for an environment variable named SEABIRD_CTD_PORT. Otherwise raises
+CTDConnectionError</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>COM_port</strong> – string, COM_port to connect to</li>
+<li><strong>baud</strong> – int for what baud rate to use to communicate with the device</li>
+<li><strong>timeout</strong> – passed through to serial package - in most cases, won’t be used. It’s a read timeout when requesting
+data from the device - this package, by default only reads the data it knows to be waiting on the line,
+but it can read with the timeout as well.</li>
+<li><strong>setup_delay</strong> – How long, in seconds, should it wait to let the CTD wake?</li>
+<li><strong>wait_numerator</strong> – integer, milliseconds. Represents the top portion of a fraction (wait_numerator/baud) representing how long the code should
+wait after reading to check if there is more data on the line. If it waits that time and there is no data on the line, it moves to processing the data.
+Decrease for speed, but more read errors, increase if you’re getting lots of read errors. As is, it <em>should</em>
+work for most devices and baud rates.</li>
+<li><strong>send_raw</strong> – a writeable file handle that the raw response, preprocessing, from the CTD will be sent to. Useful for debugging and extending this module to new CTDs, as well as for unit testing</li>
+<li><strong>debug</strong> – boolean. Changes bits of behavior for debugging purposes.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<dl class="attribute">
 <dt id="seabird_ctd.CTD.battery_change">
 <code class="descname">battery_change</code><a class="headerlink" href="#seabird_ctd.CTD.battery_change" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
@@ -124,13 +148,29 @@ pull in those records.</p>
 <dd></dd></dl>
 
 <dl class="method">
-<dt id="seabird_ctd.CTD.find_and_insert_records">
-<code class="descname">find_and_insert_records</code><span class="sig-paren">(</span><em>data</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/seabird_ctd.html#CTD.find_and_insert_records"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#seabird_ctd.CTD.find_and_insert_records" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dt id="seabird_ctd.CTD.find_records">
+<code class="descname">find_records</code><span class="sig-paren">(</span><em>data</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/seabird_ctd.html#CTD.find_records"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#seabird_ctd.CTD.find_records" title="Permalink to this definition">¶</a></dt>
+<dd><blockquote>
+<div>Given the parsing regex defined in the command object for this CTD, runs it and returns a list of dicts
+containing sampled values. The dict will always have the keys defined in the command object’s “keys” attribute.
+This varies model to model, so your code may need to check for keys, depending. In the event of values that
+are not always enabled (like salinity, or sound velocity), the keys are still present, but set to None if
+those values are not enabled.</div></blockquote>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>data</strong> – </td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
 
 <dl class="method">
 <dt id="seabird_ctd.CTD.listen">
-<code class="descname">listen</code><span class="sig-paren">(</span><em>interval=60</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/seabird_ctd.html#CTD.listen"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#seabird_ctd.CTD.listen" title="Permalink to this definition">¶</a></dt>
+<code class="descname">listen</code><span class="sig-paren">(</span><em>interval=60</em>, <em>max_iterations=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/seabird_ctd.html#CTD.listen"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#seabird_ctd.CTD.listen" title="Permalink to this definition">¶</a></dt>
 <dd><p>Continuously polls for new data on the line at interval. Used when autosampling with realtime transmission to
 receive records.</p>
 <p>See documentation for start_autosample for full documentation of these parameters. This function remains
@@ -142,6 +182,10 @@ part of the public API so you can listen on existing sampling if the autosampler
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
 <li><strong>handler</strong> – (See start_autosample documentation). A functiion to process new records as they are available.</li>
 <li><strong>interval</strong> – The sampling interval, in seconds.</li>
+<li><strong>max_iterations</strong> – Primarily used for testing, sets how many samples it should try to read before exiting the
+listening loop and returning control to the program. This could also be used by another program
+to do intermittent checks for data since it’s the only way to exit the listen loop without sending
+a break event to the program. Default is None, which indicates to run indefinitely</li>
 </ul>
 </td>
 </tr>
@@ -156,6 +200,24 @@ part of the public API so you can listen on existing sampling if the autosampler
 <dt id="seabird_ctd.CTD.read_records">
 <code class="descname">read_records</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/seabird_ctd.html#CTD.read_records"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#seabird_ctd.CTD.read_records" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
+
+<dl class="method">
+<dt id="seabird_ctd.CTD.recover">
+<code class="descname">recover</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/seabird_ctd.html#CTD.recover"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#seabird_ctd.CTD.recover" title="Permalink to this definition">¶</a></dt>
+<dd><blockquote>
+<div>This is for using if the line is interrupted by something, but the script stays running. In our production,
+if power goes out to an intermediate set of devices, the CTD can go down. This method closes the existing
+ctd connection, reopens it, tries to reestablish communication with the device. Triggered if we get a
+UnicodeDecodeError parsing the data.</div></blockquote>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
 
 <dl class="method">
 <dt id="seabird_ctd.CTD.send_command">
@@ -214,7 +276,7 @@ cannot be interrupted and simply runs until the user cancels it.</div></blockquo
 
 <dl class="method">
 <dt id="seabird_ctd.CTD.start_autosample">
-<code class="descname">start_autosample</code><span class="sig-paren">(</span><em>interval=60</em>, <em>realtime='Y'</em>, <em>handler=None</em>, <em>no_stop=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/seabird_ctd.html#CTD.start_autosample"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#seabird_ctd.CTD.start_autosample" title="Permalink to this definition">¶</a></dt>
+<code class="descname">start_autosample</code><span class="sig-paren">(</span><em>interval=60</em>, <em>realtime='Y'</em>, <em>handler=None</em>, <em>no_stop=False</em>, <em>max_iterations=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/seabird_ctd.html#CTD.start_autosample"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#seabird_ctd.CTD.start_autosample" title="Permalink to this definition">¶</a></dt>
 <dd><blockquote>
 <div><p>This should set the sampling interval, then turn on autosampling, then just keep reading the line every interval.
 Before reading the line, it should also check for new commands in a command queue, so it can see if it’s
@@ -239,6 +301,10 @@ If realtime == “Y” then you must provide a handler function.</li>
 <li><strong>no_stop</strong> – Allows you to tell it to ignore settings if it’s already sampling. If no_stop is True, will just
 start listening to new records coming in (if realtime == “Y”). That way, the CTD won’t stop sampling
 for any length of time, but will retain prior settings (ignoring the new interval).</li>
+<li><strong>max_iterations</strong> – Primarily used for testing, sets how many samples it should try to read before exiting the
+listening loop and returning control to the program. This could also be used by another program
+to do intermittent checks for data since it’s the only way to exit the listen loop without sending
+a break event to the program. Default is None, which indicates to run indefinitely</li>
 </ul>
 </td>
 </tr>
@@ -251,7 +317,7 @@ for any length of time, but will retain prior settings (ignoring the new interva
 
 <dl class="method">
 <dt id="seabird_ctd.CTD.status">
-<code class="descname">status</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/seabird_ctd.html#CTD.status"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#seabird_ctd.CTD.status" title="Permalink to this definition">¶</a></dt>
+<code class="descname">status</code><span class="sig-paren">(</span><em>status_parts=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/seabird_ctd.html#CTD.status"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#seabird_ctd.CTD.status" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
@@ -287,64 +353,14 @@ for any length of time, but will retain prior settings (ignoring the new interva
 <dd></dd></dl>
 
 <dl class="exception">
+<dt id="seabird_ctd.CTDUnicodeError">
+<em class="property">exception </em><code class="descclassname">seabird_ctd.</code><code class="descname">CTDUnicodeError</code><span class="sig-paren">(</span><em>response</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/seabird_ctd.html#CTDUnicodeError"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#seabird_ctd.CTDUnicodeError" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="exception">
 <dt id="seabird_ctd.CTDUnsupportedError">
 <em class="property">exception </em><code class="descclassname">seabird_ctd.</code><code class="descname">CTDUnsupportedError</code><a class="reference internal" href="_modules/seabird_ctd.html#CTDUnsupportedError"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#seabird_ctd.CTDUnsupportedError" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
-
-<dl class="class">
-<dt id="seabird_ctd.SBE37">
-<em class="property">class </em><code class="descclassname">seabird_ctd.</code><code class="descname">SBE37</code><a class="reference internal" href="_modules/seabird_ctd.html#SBE37"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#seabird_ctd.SBE37" title="Permalink to this definition">¶</a></dt>
-<dd><dl class="method">
-<dt id="seabird_ctd.SBE37.parse_status">
-<code class="descname">parse_status</code><span class="sig-paren">(</span><em>status_message</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/seabird_ctd.html#SBE37.parse_status"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#seabird_ctd.SBE37.parse_status" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="seabird_ctd.SBE37.retrieve_samples">
-<code class="descname">retrieve_samples</code><span class="sig-paren">(</span><em>start</em>, <em>end</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/seabird_ctd.html#SBE37.retrieve_samples"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#seabird_ctd.SBE37.retrieve_samples" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="seabird_ctd.SBE37.sample_interval">
-<code class="descname">sample_interval</code><span class="sig-paren">(</span><em>interval</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/seabird_ctd.html#SBE37.sample_interval"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#seabird_ctd.SBE37.sample_interval" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="seabird_ctd.SBE37.set_datetime">
-<code class="descname">set_datetime</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/seabird_ctd.html#SBE37.set_datetime"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#seabird_ctd.SBE37.set_datetime" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-</dd></dl>
-
-<dl class="class">
-<dt id="seabird_ctd.SBE39">
-<em class="property">class </em><code class="descclassname">seabird_ctd.</code><code class="descname">SBE39</code><a class="reference internal" href="_modules/seabird_ctd.html#SBE39"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#seabird_ctd.SBE39" title="Permalink to this definition">¶</a></dt>
-<dd><dl class="method">
-<dt id="seabird_ctd.SBE39.parse_status">
-<code class="descname">parse_status</code><span class="sig-paren">(</span><em>status_message</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/seabird_ctd.html#SBE39.parse_status"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#seabird_ctd.SBE39.parse_status" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="seabird_ctd.SBE39.record_regex">
-<code class="descname">record_regex</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/seabird_ctd.html#SBE39.record_regex"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#seabird_ctd.SBE39.record_regex" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="seabird_ctd.SBE39.retrieve_samples">
-<code class="descname">retrieve_samples</code><span class="sig-paren">(</span><em>start</em>, <em>end</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/seabird_ctd.html#SBE39.retrieve_samples"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#seabird_ctd.SBE39.retrieve_samples" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="seabird_ctd.SBE39.sample_interval">
-<code class="descname">sample_interval</code><span class="sig-paren">(</span><em>interval</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/seabird_ctd.html#SBE39.sample_interval"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#seabird_ctd.SBE39.sample_interval" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="seabird_ctd.SBE39.set_datetime">
-<code class="descname">set_datetime</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/seabird_ctd.html#SBE39.set_datetime"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#seabird_ctd.SBE39.set_datetime" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-</dd></dl>
 
 <dl class="function">
 <dt id="seabird_ctd.interrupt_checker">
@@ -371,6 +387,195 @@ to RabbitMQ and sending READ commands every interval</div></blockquote>
 </tr>
 </tbody>
 </table>
+</dd></dl>
+
+<span class="target" id="module-seabird_ctd.ctd_models"></span><dl class="class">
+<dt id="seabird_ctd.ctd_models.CTDCommandObject">
+<em class="property">class </em><code class="descclassname">seabird_ctd.ctd_models.</code><code class="descname">CTDCommandObject</code><a class="reference internal" href="_modules/seabird_ctd/ctd_models.html#CTDCommandObject"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#seabird_ctd.ctd_models.CTDCommandObject" title="Permalink to this definition">¶</a></dt>
+<dd><p>Just an empty class that can be subclassed so that any isinstance checks would work</p>
+<dl class="method">
+<dt id="seabird_ctd.ctd_models.CTDCommandObject.clean_response">
+<code class="descname">clean_response</code><span class="sig-paren">(</span><em>response</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/seabird_ctd/ctd_models.html#CTDCommandObject.clean_response"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#seabird_ctd.ctd_models.CTDCommandObject.clean_response" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="seabird_ctd.ctd_models.CTDCommandObject.clean_status">
+<code class="descname">clean_status</code><span class="sig-paren">(</span><em>status</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/seabird_ctd/ctd_models.html#CTDCommandObject.clean_status"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#seabird_ctd.ctd_models.CTDCommandObject.clean_status" title="Permalink to this definition">¶</a></dt>
+<dd><blockquote>
+<div>REMINDER: THIS REMOVES <em>ALL</em> empty lines, not just leading ones (eg, SBE19plus which has some in the middle)</div></blockquote>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>status</strong> – </td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="seabird_ctd.ctd_models.CTDCommandObject.operation_wait_times">
+<code class="descname">operation_wait_times</code><em class="property"> = {}</em><a class="headerlink" href="#seabird_ctd.ctd_models.CTDCommandObject.operation_wait_times" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="seabird_ctd.ctd_models.CTDCommandObject.txrealtime">
+<code class="descname">txrealtime</code><span class="sig-paren">(</span><em>value</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/seabird_ctd/ctd_models.html#CTDCommandObject.txrealtime"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#seabird_ctd.ctd_models.CTDCommandObject.txrealtime" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="seabird_ctd.ctd_models.SBE19plus">
+<em class="property">class </em><code class="descclassname">seabird_ctd.ctd_models.</code><code class="descname">SBE19plus</code><span class="sig-paren">(</span><em>main_ctd</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/seabird_ctd/ctd_models.html#SBE19plus"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#seabird_ctd.ctd_models.SBE19plus" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="method">
+<dt id="seabird_ctd.ctd_models.SBE19plus.parse_status">
+<code class="descname">parse_status</code><span class="sig-paren">(</span><em>status_message</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/seabird_ctd/ctd_models.html#SBE19plus.parse_status"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#seabird_ctd.ctd_models.SBE19plus.parse_status" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="seabird_ctd.ctd_models.SBE19plus.record_regex">
+<code class="descname">record_regex</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/seabird_ctd/ctd_models.html#SBE19plus.record_regex"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#seabird_ctd.ctd_models.SBE19plus.record_regex" title="Permalink to this definition">¶</a></dt>
+<dd><blockquote>
+<div>Handles generation of the regex for the data records. If salinity output is turned on, handles that correctly.
+STILL TO DO - handle other optional values, such as sound velocity - what happens if sound velocity is on,
+but salinity is off, or if both are on?</div></blockquote>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="seabird_ctd.ctd_models.SBE19plus.sample_interval">
+<code class="descname">sample_interval</code><span class="sig-paren">(</span><em>interval</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/seabird_ctd/ctd_models.html#SBE19plus.sample_interval"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#seabird_ctd.ctd_models.SBE19plus.sample_interval" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="seabird_ctd.ctd_models.SBE19plus.set_datetime">
+<code class="descname">set_datetime</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/seabird_ctd/ctd_models.html#SBE19plus.set_datetime"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#seabird_ctd.ctd_models.SBE19plus.set_datetime" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="seabird_ctd.ctd_models.SBE19plus.setup">
+<code class="descname">setup</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/seabird_ctd/ctd_models.html#SBE19plus.setup"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#seabird_ctd.ctd_models.SBE19plus.setup" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="seabird_ctd.ctd_models.SBE19plus.txrealtime">
+<code class="descname">txrealtime</code><span class="sig-paren">(</span><em>value</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/seabird_ctd/ctd_models.html#SBE19plus.txrealtime"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#seabird_ctd.ctd_models.SBE19plus.txrealtime" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="seabird_ctd.ctd_models.SBE37S">
+<em class="property">class </em><code class="descclassname">seabird_ctd.ctd_models.</code><code class="descname">SBE37S</code><span class="sig-paren">(</span><em>main_ctd</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/seabird_ctd/ctd_models.html#SBE37S"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#seabird_ctd.ctd_models.SBE37S" title="Permalink to this definition">¶</a></dt>
+<dd><p>Handles the SBE37S commands</p>
+<dl class="method">
+<dt id="seabird_ctd.ctd_models.SBE37S.parse_status">
+<code class="descname">parse_status</code><span class="sig-paren">(</span><em>status_message</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/seabird_ctd/ctd_models.html#SBE37S.parse_status"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#seabird_ctd.ctd_models.SBE37S.parse_status" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="seabird_ctd.ctd_models.SBE37S.record_regex">
+<code class="descname">record_regex</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/seabird_ctd/ctd_models.html#SBE37S.record_regex"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#seabird_ctd.ctd_models.SBE37S.record_regex" title="Permalink to this definition">¶</a></dt>
+<dd><blockquote>
+<div>Handles generation of the regex for the data records. If salinity output is turned on, handles that correctly.
+STILL TO DO - handle other optional values, such as sound velocity - what happens if sound velocity is on,
+but salinity is off, or if both are on?</div></blockquote>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="seabird_ctd.ctd_models.SBE37S.retrieve_samples">
+<code class="descname">retrieve_samples</code><span class="sig-paren">(</span><em>start</em>, <em>end</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/seabird_ctd/ctd_models.html#SBE37S.retrieve_samples"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#seabird_ctd.ctd_models.SBE37S.retrieve_samples" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="seabird_ctd.ctd_models.SBE37S.sample_interval">
+<code class="descname">sample_interval</code><span class="sig-paren">(</span><em>interval</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/seabird_ctd/ctd_models.html#SBE37S.sample_interval"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#seabird_ctd.ctd_models.SBE37S.sample_interval" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="seabird_ctd.ctd_models.SBE37S.set_datetime">
+<code class="descname">set_datetime</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/seabird_ctd/ctd_models.html#SBE37S.set_datetime"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#seabird_ctd.ctd_models.SBE37S.set_datetime" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="seabird_ctd.ctd_models.SBE37S.setup">
+<code class="descname">setup</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/seabird_ctd/ctd_models.html#SBE37S.setup"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#seabird_ctd.ctd_models.SBE37S.setup" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="seabird_ctd.ctd_models.SBE39">
+<em class="property">class </em><code class="descclassname">seabird_ctd.ctd_models.</code><code class="descname">SBE39</code><span class="sig-paren">(</span><em>main_ctd</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/seabird_ctd/ctd_models.html#SBE39"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#seabird_ctd.ctd_models.SBE39" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="method">
+<dt id="seabird_ctd.ctd_models.SBE39.parse_status">
+<code class="descname">parse_status</code><span class="sig-paren">(</span><em>status_message</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/seabird_ctd/ctd_models.html#SBE39.parse_status"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#seabird_ctd.ctd_models.SBE39.parse_status" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="seabird_ctd.ctd_models.SBE39.record_regex">
+<code class="descname">record_regex</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/seabird_ctd/ctd_models.html#SBE39.record_regex"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#seabird_ctd.ctd_models.SBE39.record_regex" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="seabird_ctd.ctd_models.SBE39.retrieve_samples">
+<code class="descname">retrieve_samples</code><span class="sig-paren">(</span><em>start</em>, <em>end</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/seabird_ctd/ctd_models.html#SBE39.retrieve_samples"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#seabird_ctd.ctd_models.SBE39.retrieve_samples" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="seabird_ctd.ctd_models.SBE39.sample_interval">
+<code class="descname">sample_interval</code><span class="sig-paren">(</span><em>interval</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/seabird_ctd/ctd_models.html#SBE39.sample_interval"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#seabird_ctd.ctd_models.SBE39.sample_interval" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="seabird_ctd.ctd_models.SBE39.set_datetime">
+<code class="descname">set_datetime</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/seabird_ctd/ctd_models.html#SBE39.set_datetime"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#seabird_ctd.ctd_models.SBE39.set_datetime" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="seabird_ctd.ctd_models.SBE39.setup">
+<code class="descname">setup</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/seabird_ctd/ctd_models.html#SBE39.setup"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#seabird_ctd.ctd_models.SBE39.setup" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="seabird_ctd.ctd_models.SBE3915">
+<em class="property">class </em><code class="descclassname">seabird_ctd.ctd_models.</code><code class="descname">SBE3915</code><span class="sig-paren">(</span><em>main_ctd</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/seabird_ctd/ctd_models.html#SBE3915"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#seabird_ctd.ctd_models.SBE3915" title="Permalink to this definition">¶</a></dt>
+<dd><p>Older SBE39 - firmware 1.5 - similar, but different status parsing</p>
+<dl class="method">
+<dt id="seabird_ctd.ctd_models.SBE3915.clean_response">
+<code class="descname">clean_response</code><span class="sig-paren">(</span><em>response</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/seabird_ctd/ctd_models.html#SBE3915.clean_response"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#seabird_ctd.ctd_models.SBE3915.clean_response" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="seabird_ctd.ctd_models.SBE3915.parse_status">
+<code class="descname">parse_status</code><span class="sig-paren">(</span><em>status_message</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/seabird_ctd/ctd_models.html#SBE3915.parse_status"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#seabird_ctd.ctd_models.SBE3915.parse_status" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="seabird_ctd.ctd_models.SBE3915.setup">
+<code class="descname">setup</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/seabird_ctd/ctd_models.html#SBE3915.setup"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#seabird_ctd.ctd_models.SBE3915.setup" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
 </dd></dl>
 
 </div>

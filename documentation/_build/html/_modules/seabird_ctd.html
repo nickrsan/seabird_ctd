@@ -51,24 +51,20 @@
 <span class="sd">	to a CTD while it&#39;s logging and can be extended to support communication with different versions of the Seabird CTD</span>
 <span class="sd">	loggers with different capabilities and command descriptions.</span>
 <span class="sd">&quot;&quot;&quot;</span>
-
 <span class="n">__author__</span> <span class="o">=</span> <span class="s2">&quot;nickrsan&quot;</span>
-<span class="kn">from</span> <span class="nn">seabird_ctd.version</span> <span class="k">import</span> <span class="n">version</span> <span class="k">as</span> <span class="n">__version__</span>
-
-<span class="kn">import</span> <span class="nn">time</span>
-<span class="kn">from</span> <span class="nn">datetime</span> <span class="k">import</span> <span class="n">timezone</span>
-<span class="kn">import</span> <span class="nn">pytz</span>
 <span class="kn">import</span> <span class="nn">datetime</span>
+<span class="kn">import</span> <span class="nn">logging</span>
 <span class="kn">import</span> <span class="nn">os</span>
 <span class="kn">import</span> <span class="nn">re</span>
-<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">import</span> <span class="nn">time</span>
 <span class="kn">import</span> <span class="nn">traceback</span>
+<span class="kn">from</span> <span class="nn">datetime</span> <span class="k">import</span> <span class="n">timezone</span>
+<span class="kn">import</span> <span class="nn">pytz</span>
+<span class="kn">import</span> <span class="nn">serial</span>
 
 <span class="kn">import</span> <span class="nn">six</span>
 
-<span class="kn">import</span> <span class="nn">serial</span>
-
-<span class="c1">#logging.basicConfig(level=logging.DEBUG)</span>
+<span class="kn">from</span> <span class="nn">seabird_ctd.version</span> <span class="k">import</span> <span class="n">version</span> <span class="k">as</span> <span class="n">__version__</span>
 
 <span class="k">try</span><span class="p">:</span>
 	<span class="kn">import</span> <span class="nn">pika</span>
@@ -83,71 +79,7 @@
 	<span class="n">interrupt</span> <span class="o">=</span> <span class="kc">None</span>
 	<span class="n">logging</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;Unable to load a required module for interrupt queue. Can be ignored if not using RabbitMQ, but this message is unusual regardless.&quot;</span><span class="p">)</span>
 
-<div class="viewcode-block" id="SBE37"><a class="viewcode-back" href="../index.html#seabird_ctd.SBE37">[docs]</a><span class="k">class</span> <span class="nc">SBE37</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
-	<span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-		<span class="bp">self</span><span class="o">.</span><span class="n">max_samples</span> <span class="o">=</span> <span class="mi">3655394</span>  <span class="c1"># needs verification. This is just a guess based on SBE39</span>
-		<span class="bp">self</span><span class="o">.</span><span class="n">keys</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;temperature&quot;</span><span class="p">,</span> <span class="s2">&quot;pressure&quot;</span><span class="p">,</span> <span class="s2">&quot;datetime&quot;</span><span class="p">)</span>
-
-<div class="viewcode-block" id="SBE37.set_datetime"><a class="viewcode-back" href="../index.html#seabird_ctd.SBE37.set_datetime">[docs]</a>	<span class="k">def</span> <span class="nf">set_datetime</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-		<span class="n">dt</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">(</span><span class="n">timezone</span><span class="o">.</span><span class="n">utc</span><span class="p">)</span>
-		<span class="k">return</span> <span class="p">[</span><span class="s2">&quot;DATETIME=</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">dt</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s2">&quot;%m</span><span class="si">%d</span><span class="s2">%Y%H%M%S&quot;</span><span class="p">))]</span></div>
-
-<div class="viewcode-block" id="SBE37.sample_interval"><a class="viewcode-back" href="../index.html#seabird_ctd.SBE37.sample_interval">[docs]</a>	<span class="k">def</span> <span class="nf">sample_interval</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">interval</span><span class="p">):</span>
-		<span class="k">return</span> <span class="s2">&quot;SAMPLEINTERVAL=</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">interval</span><span class="p">)</span></div>
-
-<div class="viewcode-block" id="SBE37.retrieve_samples"><a class="viewcode-back" href="../index.html#seabird_ctd.SBE37.retrieve_samples">[docs]</a>	<span class="k">def</span> <span class="nf">retrieve_samples</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">start</span><span class="p">,</span> <span class="n">end</span><span class="p">):</span>
-		<span class="k">return</span> <span class="p">[</span>
-			<span class="s2">&quot;OUTPUTFORMAT=1&quot;</span><span class="p">,</span>
-			<span class="s2">&quot;GetSamples:</span><span class="si">{}</span><span class="s2">,</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">start</span><span class="p">,</span><span class="n">end</span><span class="p">)</span>
-		<span class="p">]</span></div>
-
-<div class="viewcode-block" id="SBE37.parse_status"><a class="viewcode-back" href="../index.html#seabird_ctd.SBE37.parse_status">[docs]</a>	<span class="k">def</span> <span class="nf">parse_status</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">status_message</span><span class="p">):</span>
-		<span class="n">return_dict</span> <span class="o">=</span> <span class="p">{}</span>
-		<span class="n">return_dict</span><span class="p">[</span><span class="s2">&quot;full_model&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">status_message</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot; &quot;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
-		<span class="n">return_dict</span><span class="p">[</span><span class="s2">&quot;serial_number&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">status_message</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot; &quot;</span><span class="p">)[</span><span class="mi">4</span><span class="p">]</span>
-
-		<span class="n">voltages</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="s2">&quot;vMain\s+=\s+(\d+\.\d+),\s+vLith\s+=\s+(\d+\.\d+)&quot;</span><span class="p">,</span> <span class="n">status_message</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
-		<span class="n">return_dict</span><span class="p">[</span><span class="s2">&quot;battery_voltage&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">voltages</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
-		<span class="n">return_dict</span><span class="p">[</span><span class="s2">&quot;lithium_voltage&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">voltages</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
-
-		<span class="n">return_dict</span><span class="p">[</span><span class="s2">&quot;sample_number&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">status_message</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;, &quot;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot; = &quot;</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot; &quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
-		<span class="n">return_dict</span><span class="p">[</span><span class="s2">&quot;is_sampling&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span> <span class="k">if</span> <span class="n">status_message</span><span class="p">[</span><span class="mi">4</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;logging data&quot;</span> <span class="k">else</span> <span class="kc">False</span>
-		<span class="k">return</span> <span class="n">return_dict</span></div></div>
-
-<div class="viewcode-block" id="SBE39"><a class="viewcode-back" href="../index.html#seabird_ctd.SBE39">[docs]</a><span class="k">class</span> <span class="nc">SBE39</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
-	<span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-		<span class="bp">self</span><span class="o">.</span><span class="n">max_samples</span> <span class="o">=</span> <span class="mi">3655394</span>
-		<span class="bp">self</span><span class="o">.</span><span class="n">keys</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;temperature&quot;</span><span class="p">,</span> <span class="s2">&quot;pressure&quot;</span><span class="p">,</span> <span class="s2">&quot;datetime&quot;</span><span class="p">)</span>
-
-<div class="viewcode-block" id="SBE39.set_datetime"><a class="viewcode-back" href="../index.html#seabird_ctd.SBE39.set_datetime">[docs]</a>	<span class="k">def</span> <span class="nf">set_datetime</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-		<span class="n">dt</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">(</span><span class="n">timezone</span><span class="o">.</span><span class="n">utc</span><span class="p">)</span>
-		<span class="k">return</span> <span class="p">[</span><span class="s2">&quot;MMDDYY=</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">dt</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s2">&quot;%m</span><span class="si">%d</span><span class="s2">%y&quot;</span><span class="p">)),</span> <span class="s2">&quot;HHMMSS=</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">dt</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s2">&quot;%H%M%S&quot;</span><span class="p">))]</span></div>
-
-<div class="viewcode-block" id="SBE39.sample_interval"><a class="viewcode-back" href="../index.html#seabird_ctd.SBE39.sample_interval">[docs]</a>	<span class="k">def</span> <span class="nf">sample_interval</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">interval</span><span class="p">):</span>
-		<span class="k">return</span> <span class="s2">&quot;INTERVAL=</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">interval</span><span class="p">)</span></div>
-
-<div class="viewcode-block" id="SBE39.retrieve_samples"><a class="viewcode-back" href="../index.html#seabird_ctd.SBE39.retrieve_samples">[docs]</a>	<span class="k">def</span> <span class="nf">retrieve_samples</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">start</span><span class="p">,</span> <span class="n">end</span><span class="p">):</span>
-		<span class="k">return</span> <span class="p">[</span>
-			<span class="s2">&quot;DD</span><span class="si">{}</span><span class="s2">,</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">start</span><span class="p">,</span> <span class="n">end</span><span class="p">)</span>
-		<span class="p">]</span></div>
-
-<div class="viewcode-block" id="SBE39.record_regex"><a class="viewcode-back" href="../index.html#seabird_ctd.SBE39.record_regex">[docs]</a>	<span class="k">def</span> <span class="nf">record_regex</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-		<span class="bp">self</span><span class="o">.</span><span class="n">regex</span> <span class="o">=</span> <span class="s2">&quot;(?P&lt;temperature&gt;-?\d+\.\d+),\s+(?P&lt;pressure&gt;-?\d+\.\d+),\s+(?P&lt;datetime&gt;\d+\s\w+\s\d</span><span class="si">{4}</span><span class="s2">,\s\d</span><span class="si">{2}</span><span class="s2">:\d</span><span class="si">{2}</span><span class="s2">:\d</span><span class="si">{2}</span><span class="s2">)&quot;</span>
-		<span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">regex</span></div>
-
-<div class="viewcode-block" id="SBE39.parse_status"><a class="viewcode-back" href="../index.html#seabird_ctd.SBE39.parse_status">[docs]</a>	<span class="k">def</span> <span class="nf">parse_status</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">status_message</span><span class="p">):</span>
-		<span class="n">return_dict</span> <span class="o">=</span> <span class="p">{}</span>
-		<span class="n">return_dict</span><span class="p">[</span><span class="s2">&quot;full_model&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">status_message</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;   &quot;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
-		<span class="n">return_dict</span><span class="p">[</span><span class="s2">&quot;serial_number&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">status_message</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;   &quot;</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span>
-		<span class="n">return_dict</span><span class="p">[</span><span class="s2">&quot;battery_voltage&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">status_message</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot; = &quot;</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span>
-		<span class="n">return_dict</span><span class="p">[</span><span class="s2">&quot;sample_number&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">status_message</span><span class="p">[</span><span class="mi">5</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;, &quot;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot; = &quot;</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span>
-		<span class="n">return_dict</span><span class="p">[</span><span class="s2">&quot;is_sampling&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span> <span class="k">if</span> <span class="n">status_message</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;logging data&quot;</span> <span class="k">else</span> <span class="kc">False</span>
-		<span class="k">return</span> <span class="n">return_dict</span></div></div>
-
-<span class="n">supported_ctds</span> <span class="o">=</span> <span class="p">{</span>
-	<span class="s2">&quot;SBE 37&quot;</span><span class="p">:</span> <span class="s2">&quot;SBE37&quot;</span><span class="p">,</span>
-	<span class="s2">&quot;SBE 39&quot;</span><span class="p">:</span> <span class="s2">&quot;SBE39&quot;</span>
-<span class="p">}</span>  <span class="c1"># name the instrument will report, then class name. could also do this with 2-tuples.</span>
+<span class="kn">from</span> <span class="nn">seabird_ctd.ctd_models</span> <span class="k">import</span> <span class="o">*</span>
 
 <div class="viewcode-block" id="CTDConfigurationError"><a class="viewcode-back" href="../index.html#seabird_ctd.CTDConfigurationError">[docs]</a><span class="k">class</span> <span class="nc">CTDConfigurationError</span><span class="p">(</span><span class="ne">BaseException</span><span class="p">):</span>
 	<span class="k">pass</span></div>
@@ -161,14 +93,37 @@
 <div class="viewcode-block" id="CTDUnsupportedError"><a class="viewcode-back" href="../index.html#seabird_ctd.CTDUnsupportedError">[docs]</a><span class="k">class</span> <span class="nc">CTDUnsupportedError</span><span class="p">(</span><span class="ne">BaseException</span><span class="p">):</span>
 	<span class="k">pass</span></div>
 
+<div class="viewcode-block" id="CTDUnicodeError"><a class="viewcode-back" href="../index.html#seabird_ctd.CTDUnicodeError">[docs]</a><span class="k">class</span> <span class="nc">CTDUnicodeError</span><span class="p">(</span><span class="ne">BaseException</span><span class="p">):</span>
+	<span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">response</span><span class="p">):</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">response</span> <span class="o">=</span> <span class="n">response</span>  <span class="c1"># store the response so that we can print it later</span></div>
+
 
 <div class="viewcode-block" id="CTD"><a class="viewcode-back" href="../index.html#seabird_ctd.CTD">[docs]</a><span class="k">class</span> <span class="nc">CTD</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
-	<span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">COM_port</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">baud</span><span class="o">=</span><span class="mi">9600</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">setup_delay</span><span class="o">=</span><span class="mi">2</span><span class="p">):</span>
-		<span class="sd">&quot;&quot;&quot;</span>
+	<span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">		If COM_port is not provided, checks for an environment variable named SEABIRD_CTD_PORT. Otherwise raises</span>
 <span class="sd">		CTDConnectionError</span>
 
-<span class="sd">		&quot;&quot;&quot;</span>
+<span class="sd">		:param COM_port: string, COM_port to connect to</span>
+<span class="sd">		:param baud: int for what baud rate to use to communicate with the device</span>
+<span class="sd">		:param timeout: passed through to serial package - in most cases, won&#39;t be used. It&#39;s a read timeout when requesting</span>
+<span class="sd">						data from the device - this package, by default only reads the data it knows to be waiting on the line,</span>
+<span class="sd">						but it can read with the timeout as well.</span>
+<span class="sd">		:param setup_delay: How long, in seconds, should it wait to let the CTD wake?</span>
+<span class="sd">		:param wait_numerator: integer, milliseconds. Represents the top portion of a fraction (wait_numerator/baud) representing how long the code should</span>
+<span class="sd">							wait after reading to check if there is more data on the line. If it waits that time and there is no data on the line, it moves to processing the data.</span>
+<span class="sd">							Decrease for speed, but more read errors, increase if you&#39;re getting lots of read errors. As is, it *should*</span>
+<span class="sd">							work for most devices and baud rates.</span>
+<span class="sd">		:param send_raw: a writeable file handle that the raw response, preprocessing, from the CTD will be sent to. Useful for debugging and extending this module to new CTDs, as well as for unit testing</span>
+<span class="sd">		:param debug: boolean. Changes bits of behavior for debugging purposes.</span>
+<span class="sd">	&quot;&quot;&quot;</span>
+
+	<span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">COM_port</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">baud</span><span class="o">=</span><span class="mi">9600</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">setup_delay</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">wait_numerator</span><span class="o">=</span><span class="mi">200</span><span class="p">,</span> <span class="n">send_raw</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">debug</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+
+		<span class="bp">self</span><span class="o">.</span><span class="n">debug</span> <span class="o">=</span> <span class="n">debug</span>
+		<span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">debug</span><span class="p">:</span>
+			<span class="n">logging</span><span class="o">.</span><span class="n">basicConfig</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="n">logging</span><span class="o">.</span><span class="n">DEBUG</span><span class="p">)</span>
+
+		<span class="bp">self</span><span class="o">.</span><span class="n">setup_complete</span> <span class="o">=</span> <span class="kc">False</span>  <span class="c1"># we&#39;ll use this if setup fails so we can appropriately close the object. If it fails before it&#39;s complete, we won&#39;t send a QS</span>
 
 		<span class="k">if</span> <span class="n">COM_port</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
 			<span class="k">if</span> <span class="s2">&quot;SEABIRD_CTD_PORT&quot;</span> <span class="ow">in</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">:</span>
@@ -177,40 +132,64 @@
 				<span class="k">raise</span> <span class="n">CTDConnectionError</span><span class="p">(</span><span class="s2">&quot;SEABIRD_CTD_PORT environment variable is not defined. Don&#39;t know what COM port&quot;</span>
 										 <span class="s2">&quot;to connect to for CTD data. Can&#39;t collect CTD data.&quot;</span><span class="p">)</span>
 
+		<span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">baud</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="nb">int</span><span class="p">:</span>
+			<span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;parameter </span><span class="se">\&quot;</span><span class="s2">baud</span><span class="se">\&quot;</span><span class="s2">= (for the baud rate used to communicate with the device) must be an integer. You provided </span><span class="se">\&quot;</span><span class="si">{}</span><span class="se">\&quot;</span><span class="s2"> of type </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">baud</span><span class="p">,</span> <span class="nb">type</span><span class="p">(</span><span class="n">baud</span><span class="p">)))</span>
+
 		<span class="bp">self</span><span class="o">.</span><span class="n">log</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s2">&quot;seabird_ctd.</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">COM_port</span><span class="p">))</span>  <span class="c1"># lets you tune into all seabird_ctd logging, or just this one by com port</span>
 
 		<span class="bp">self</span><span class="o">.</span><span class="n">last_sample</span> <span class="o">=</span> <span class="kc">None</span>
 		<span class="bp">self</span><span class="o">.</span><span class="n">is_sampling</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># starts at None, will be set when DS is run.</span>
 		<span class="bp">self</span><span class="o">.</span><span class="n">sample_number</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># will be set by DS command</span>
 		<span class="bp">self</span><span class="o">.</span><span class="n">com_port</span> <span class="o">=</span> <span class="n">COM_port</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">send_raw</span> <span class="o">=</span> <span class="n">send_raw</span>
 
 		<span class="bp">self</span><span class="o">.</span><span class="n">ctd</span> <span class="o">=</span> <span class="n">serial</span><span class="o">.</span><span class="n">Serial</span><span class="p">(</span><span class="n">COM_port</span><span class="p">,</span> <span class="n">baud</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="n">timeout</span><span class="p">)</span>
-		<span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="n">setup_delay</span><span class="p">)</span>  <span class="c1"># give it time to init</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">baud</span> <span class="o">=</span> <span class="n">baud</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">timeout</span> <span class="o">=</span> <span class="n">timeout</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">read_safety_delay</span> <span class="o">=</span> <span class="n">wait_numerator</span><span class="o">/</span><span class="bp">self</span><span class="o">.</span><span class="n">baud</span>
+		<span class="c1"># read_safety_delay is kind of a weird one. We only read as many characters as we know are on the pipe in order to avoid having to wait for the</span>
+		<span class="c1"># timeout on every read - which significantly, and unnecessarily prolongs reads. *But* when we&#39;re reading while data is being transferred, we</span>
+		<span class="c1"># read quite a bit faster than data is transferred in, so we can be falsely told that there aren&#39;t any characters waiting, only because they&#39;re</span>
+		<span class="c1"># still coming in on the serial line. So, after each read, we have a short sleep of 120/baudrate so that there is time for a new character to</span>
+		<span class="c1"># register as being available and the read code decides to do another read. The value 120/baudrate isn&#39;t *super* scientific and might be able</span>
+		<span class="c1"># to be refined. Theoretically, at a minimum, we&#39;d need 8/baudrate seconds to receive a full byte of information on the line. I was going to</span>
+		<span class="c1"># just double it for a safe margin, but that wasn&#39;t enough. We still got mixed up commands and responses even as high as 50/baudrate. So, I</span>
+		<span class="c1"># doubled that, and added a bit and it seems to work reliably. If there are still problems/race conditions around reading data, upping the numerator here</span>
+		<span class="c1"># may help solve them. Note that even for the slowest baudrates, this is still shorter than waiting for the timeout to hit because we wait</span>
+		<span class="c1"># the minimum amount of time to ensure no new data is currently being transmitted.</span>
+		
+		<span class="k">try</span><span class="p">:</span>
+			<span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="n">setup_delay</span><span class="p">)</span>  <span class="c1"># give it time to init</span>
 
-		<span class="bp">self</span><span class="o">.</span><span class="n">command_object</span> <span class="o">=</span> <span class="kc">None</span>
-		<span class="bp">self</span><span class="o">.</span><span class="n">handler</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># will be set if self.listen is called</span>
-		<span class="bp">self</span><span class="o">.</span><span class="n">held_records</span> <span class="o">=</span> <span class="p">[]</span>
+			<span class="bp">self</span><span class="o">.</span><span class="n">command_object</span> <span class="o">=</span> <span class="kc">None</span>
+			<span class="bp">self</span><span class="o">.</span><span class="n">handler</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># will be set if self.listen is called</span>
+			<span class="bp">self</span><span class="o">.</span><span class="n">held_records</span> <span class="o">=</span> <span class="p">[]</span>
 
-		<span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># to be set later</span>
+			<span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># to be set later</span>
 
-		<span class="c1"># STATUS INFO TO BE SET BY .status()</span>
-		<span class="bp">self</span><span class="o">.</span><span class="n">full_model</span> <span class="o">=</span> <span class="kc">None</span>
-		<span class="bp">self</span><span class="o">.</span><span class="n">serial_number</span> <span class="o">=</span> <span class="kc">None</span>
-		<span class="bp">self</span><span class="o">.</span><span class="n">_battery_voltage</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># actual battery voltage is function so we can keep track of changes</span>
-		<span class="bp">self</span><span class="o">.</span><span class="n">_original_voltage</span> <span class="o">=</span> <span class="kc">None</span>
-		<span class="bp">self</span><span class="o">.</span><span class="n">lithium_voltage</span> <span class="o">=</span> <span class="kc">None</span>
-		<span class="bp">self</span><span class="o">.</span><span class="n">sample_number</span> <span class="o">=</span> <span class="kc">None</span>
-		<span class="bp">self</span><span class="o">.</span><span class="n">is_sampling</span> <span class="o">=</span> <span class="kc">None</span>
+			<span class="c1"># STATUS INFO TO BE SET BY .status()</span>
+			<span class="bp">self</span><span class="o">.</span><span class="n">full_model</span> <span class="o">=</span> <span class="kc">None</span>
+			<span class="bp">self</span><span class="o">.</span><span class="n">serial_number</span> <span class="o">=</span> <span class="kc">None</span>
+			<span class="bp">self</span><span class="o">.</span><span class="n">_battery_voltage</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># actual battery voltage is function so we can keep track of changes</span>
+			<span class="bp">self</span><span class="o">.</span><span class="n">_original_voltage</span> <span class="o">=</span> <span class="kc">None</span>
+			<span class="bp">self</span><span class="o">.</span><span class="n">lithium_voltage</span> <span class="o">=</span> <span class="kc">None</span>
+			<span class="bp">self</span><span class="o">.</span><span class="n">sample_number</span> <span class="o">=</span> <span class="kc">None</span>
+			<span class="bp">self</span><span class="o">.</span><span class="n">is_sampling</span> <span class="o">=</span> <span class="kc">None</span>
+			<span class="bp">self</span><span class="o">.</span><span class="n">salinity_output</span> <span class="o">=</span> <span class="kc">None</span>
 
-		<span class="c1"># INTERNAL FLAGS AND INFO</span>
-		<span class="bp">self</span><span class="o">.</span><span class="n">rabbitmq_server</span> <span class="o">=</span> <span class="kc">None</span>
-		<span class="bp">self</span><span class="o">.</span><span class="n">_stop_monitoring</span> <span class="o">=</span> <span class="kc">False</span>  <span class="c1"># a flag that will be monitored to determine if we should stop checking for commands</span>
-		<span class="bp">self</span><span class="o">.</span><span class="n">_close_connection</span> <span class="o">=</span> <span class="kc">False</span>  <span class="c1"># same as previous</span>
+			<span class="c1"># INTERNAL FLAGS AND INFO</span>
+			<span class="bp">self</span><span class="o">.</span><span class="n">rabbitmq_server</span> <span class="o">=</span> <span class="kc">None</span>
+			<span class="bp">self</span><span class="o">.</span><span class="n">_stop_monitoring</span> <span class="o">=</span> <span class="kc">False</span>  <span class="c1"># a flag that will be monitored to determine if we should stop checking for commands</span>
+			<span class="bp">self</span><span class="o">.</span><span class="n">_close_connection</span> <span class="o">=</span> <span class="kc">False</span>  <span class="c1"># same as previous</span>
 
-		<span class="bp">self</span><span class="o">.</span><span class="n">last_status</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># will be set each time status is run</span>
-		<span class="bp">self</span><span class="o">.</span><span class="n">determine_ctd_model</span><span class="p">()</span>
-		<span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">last_status</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>  <span class="c1"># we check it here because determine_ctd_model might run it if it needs to. Don&#39;t waste time doubling up.</span>
-			<span class="bp">self</span><span class="o">.</span><span class="n">status</span><span class="p">()</span>  <span class="c1"># will fill some fields in so we know what sample it&#39;s on, etc</span>
+			<span class="bp">self</span><span class="o">.</span><span class="n">last_status</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># will be set each time status is run</span>
+			<span class="bp">self</span><span class="o">.</span><span class="n">determine_ctd_model</span><span class="p">()</span>
+			<span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">last_status</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>  <span class="c1"># we check it here because determine_ctd_model might run it if it needs to. Don&#39;t waste time doubling up.</span>
+				<span class="bp">self</span><span class="o">.</span><span class="n">status</span><span class="p">()</span>  <span class="c1"># will fill some fields in so we know what sample it&#39;s on, etc</span>
+		<span class="k">except</span><span class="p">:</span>  <span class="c1"># if ANY exception occurs through here, close the ctd object and then reraise the exception so that we&#39;re at a clean state</span>
+			<span class="bp">self</span><span class="o">.</span><span class="n">ctd</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+			<span class="k">raise</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">setup_complete</span> <span class="o">=</span> <span class="kc">True</span>
 
 	<span class="nd">@property</span>
 	<span class="k">def</span> <span class="nf">battery_voltage</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -218,6 +197,9 @@
 
 	<span class="nd">@battery_voltage</span><span class="o">.</span><span class="n">setter</span>
 	<span class="k">def</span> <span class="nf">battery_voltage</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">new_value</span><span class="p">):</span>
+		<span class="k">if</span> <span class="n">new_value</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+			<span class="k">return</span>  <span class="c1"># battery voltage not supported</span>
+
 		<span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_battery_voltage</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
 			<span class="bp">self</span><span class="o">.</span><span class="n">_original_voltage</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">new_value</span><span class="p">)</span>
 
@@ -225,6 +207,9 @@
 
 	<span class="nd">@property</span>
 	<span class="k">def</span> <span class="nf">battery_change</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+		<span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_battery_voltage</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>  <span class="c1"># battery voltage not supported</span>
+			<span class="k">return</span> <span class="kc">None</span>
+
 		<span class="k">return</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_battery_voltage</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">_original_voltage</span><span class="p">)</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">_original_voltage</span>
 
 <div class="viewcode-block" id="CTD.determine_ctd_model"><a class="viewcode-back" href="../index.html#seabird_ctd.CTD.determine_ctd_model">[docs]</a>	<span class="k">def</span> <span class="nf">determine_ctd_model</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -232,52 +217,67 @@
 			<span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Waking CTD&quot;</span><span class="p">)</span>
 			<span class="bp">self</span><span class="o">.</span><span class="n">wake</span><span class="p">()</span>
 			<span class="n">ctd_info</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_read_all</span><span class="p">()</span> <span class="c1"># TODO: Is the data returned from wake always junk? What if this is starting up after setting the CTD to autosample, then the server crashes and is reconnecting</span>
+
+			<span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;CTD responded with </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">ctd_info</span><span class="p">))</span>
+
+			<span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">ctd_info</span><span class="p">:</span>  <span class="c1"># it should write out the model when you connect - this works unless it hasn&#39;t timed out since last connection</span>
+				<span class="k">if</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">supported_ctds</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+					<span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Model Found: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">line</span><span class="p">))</span>
+					<span class="bp">self</span><span class="o">.</span><span class="n">command_object</span> <span class="o">=</span> <span class="n">supported_ctds</span><span class="p">[</span><span class="n">line</span><span class="p">](</span><span class="n">main_ctd</span><span class="o">=</span><span class="bp">self</span><span class="p">)</span>  <span class="c1"># get the object that has the command info for this CTD</span>
+					<span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">line</span>
+
+			<span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Confirming model determination&quot;</span><span class="p">)</span>
+			<span class="n">ds</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">send_command</span><span class="p">(</span><span class="s2">&quot;DS&quot;</span><span class="p">,</span> <span class="n">length_to_read</span><span class="o">=</span><span class="mi">1000</span><span class="p">)</span>  <span class="c1"># basically, force it to hit a timeout - without a command object, we don&#39;t know how long the DS will take - some models take many seconds to get the details</span>
+			<span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">command_object</span><span class="p">:</span>  <span class="c1"># if we didn&#39;t get it from startup, issue a DS to determine it and peel it off the first part</span>
+				<span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;CTD responded with </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">ds</span><span class="p">))</span>
+				<span class="n">ds_parts</span> <span class="o">=</span> <span class="n">ds</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot; &quot;</span><span class="p">)</span>
+
+				<span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">ds_parts</span><span class="p">):</span>  <span class="c1"># basically, keep trying to combine the parts of the DS first line untiil we either get a model number that we have, or we run out of lines</span>
+					<span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">ds_parts</span><span class="p">[:</span><span class="n">i</span><span class="p">])</span>
+					<span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="ow">in</span> <span class="n">supported_ctds</span><span class="p">:</span>
+						<span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Best guess for model is </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">))</span>
+						<span class="k">break</span>
+				<span class="k">else</span><span class="p">:</span>
+					<span class="k">raise</span> <span class="n">CTDUnsupportedError</span><span class="p">(</span><span class="s2">&quot;Model &#39;</span><span class="si">{}</span><span class="s2">&#39; is not supported. If this doesn&#39;t match the model you have, then the model information did not correctly parse. You may try again.&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">))</span>
+
+				<span class="bp">self</span><span class="o">.</span><span class="n">command_object</span> <span class="o">=</span> <span class="n">supported_ctds</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">](</span><span class="n">main_ctd</span><span class="o">=</span><span class="bp">self</span><span class="p">)</span>
+
+			<span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">command_object</span> <span class="ow">and</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">command_object</span><span class="p">,</span> <span class="s2">&quot;_confirm_model&quot;</span><span class="p">):</span>
+				<span class="bp">self</span><span class="o">.</span><span class="n">command_object</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">command_object</span><span class="o">.</span><span class="n">_confirm_model</span><span class="p">(</span><span class="n">ds</span><span class="p">)</span>  <span class="c1"># in the case of models with multiple firmware revisions, let the command object figure out which one it is and return the correct one to us</span>
+
 		<span class="k">except</span> <span class="ne">UnicodeDecodeError</span><span class="p">:</span>
 			<span class="k">raise</span> <span class="n">CTDConfigurationError</span><span class="p">(</span><span class="s2">&quot;Unable to decode response from CTD. Try a different baud setting and ensure it matches the CTD&#39;s internal configuration&quot;</span><span class="p">)</span>
-
-		<span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;CTD responded with </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">ctd_info</span><span class="p">))</span>
-
-		<span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">ctd_info</span><span class="p">:</span>  <span class="c1"># it should write out the model when you connect - this works unless it hasn&#39;t timed out since last connection</span>
-			<span class="k">if</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">supported_ctds</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
-				<span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Model Found: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">line</span><span class="p">))</span>
-				<span class="bp">self</span><span class="o">.</span><span class="n">command_object</span> <span class="o">=</span> <span class="nb">globals</span><span class="p">()[</span><span class="n">supported_ctds</span><span class="p">[</span><span class="n">line</span><span class="p">]]()</span>  <span class="c1"># get the object that has the command info for this CTD</span>
-				<span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">line</span>
-
-		<span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">command_object</span><span class="p">:</span>  <span class="c1"># if we didn&#39;t get it from startup, issue a DS to determine it and peel it off the first part</span>
-			<span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Trying backup method to determine model&quot;</span><span class="p">)</span>
-			<span class="n">ds</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">send_command</span><span class="p">(</span><span class="s2">&quot;DS&quot;</span><span class="p">)</span>
-			<span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;CTD responded with </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">ds</span><span class="p">))</span>
-			<span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">ds</span><span class="p">[</span><span class="mi">1</span><span class="p">][:</span><span class="mi">6</span><span class="p">]</span>  <span class="c1"># it&#39;ll be the first 6 characters of the</span>
-			<span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Best guess for model is </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">))</span>
-
-			<span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">supported_ctds</span><span class="p">:</span>
-				<span class="k">raise</span> <span class="n">CTDUnsupportedError</span><span class="p">(</span><span class="s2">&quot;Model &#39;</span><span class="si">{}</span><span class="s2">&#39; is not supported. If this doesn&#39;t match the model you have, then the model information did not correctly parse. You may try again.&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">))</span>
-
-			<span class="bp">self</span><span class="o">.</span><span class="n">command_object</span> <span class="o">=</span> <span class="nb">globals</span><span class="p">()[</span><span class="n">supported_ctds</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">]]()</span>
 
 		<span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">command_object</span><span class="p">:</span>
 			<span class="k">raise</span> <span class="n">CTDConnectionError</span><span class="p">(</span><span class="s2">&quot;Unable to wake CTD or determine its type. There could be a connection error or this is currently plugged into an unsupported model&quot;</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="CTD.send_command"><a class="viewcode-back" href="../index.html#seabird_ctd.CTD.send_command">[docs]</a>	<span class="k">def</span> <span class="nf">send_command</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">command</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">length_to_read</span><span class="o">=</span><span class="s2">&quot;ALL&quot;</span><span class="p">):</span>
 		<span class="k">if</span> <span class="n">command</span><span class="p">:</span>
+			<span class="n">sleep_time</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">command_object</span><span class="o">.</span><span class="n">operation_wait_times</span><span class="p">[</span><span class="n">command</span><span class="p">]</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">command_object</span> <span class="ow">and</span> <span class="n">command</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">command_object</span><span class="o">.</span><span class="n">operation_wait_times</span> <span class="k">else</span> <span class="mi">2</span>
+			<span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Sending &#39;</span><span class="si">{}</span><span class="s2">&#39;&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">command</span><span class="p">))</span>
 			<span class="bp">self</span><span class="o">.</span><span class="n">ctd</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">six</span><span class="o">.</span><span class="n">b</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">{}</span><span class="se">\r\n</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">command</span><span class="p">)))</span>  <span class="c1"># doesn&#39;t seem to work unless we pass it a windows line ending. Sends command, but no results</span>
-			<span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+			<span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="n">sleep_time</span><span class="p">)</span>  <span class="c1"># make sure it waits a bit after the command before checking for a response - might be able to speed this up with testing</span>
 
 		<span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">{}</span><span class="s2"> bytes in waiting&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ctd</span><span class="o">.</span><span class="n">in_waiting</span><span class="p">))</span>
 		<span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">ctd</span><span class="o">.</span><span class="n">in_waiting</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>  <span class="c1"># if the CTD sent data and we haven&#39;t read it yet</span>
 			<span class="c1"># reads after sending by default so that we can determine if there was a timeout</span>
 			<span class="k">if</span> <span class="n">length_to_read</span> <span class="o">==</span> <span class="s2">&quot;ALL&quot;</span><span class="p">:</span>
 				<span class="n">data</span> <span class="o">=</span> <span class="sa">b</span><span class="s2">&quot;&quot;</span>
-				<span class="n">new_data</span> <span class="o">=</span> <span class="s2">&quot;start&quot;</span>
-				<span class="k">while</span> <span class="n">new_data</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="sa">b</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">):</span>
-					<span class="n">new_data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ctd</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="mi">1000</span><span class="p">)</span>  <span class="c1"># if we&#39;re expecting quite a lot, then keep reading until we get nothing</span>
+				<span class="k">while</span> <span class="bp">self</span><span class="o">.</span><span class="n">ctd</span><span class="o">.</span><span class="n">in_waiting</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+					<span class="n">new_data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ctd</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ctd</span><span class="o">.</span><span class="n">in_waiting</span><span class="p">)</span>  <span class="c1"># if we&#39;re expecting quite a lot, then keep reading until we get nothing - read the exact amount available so it&#39;s faster and we don&#39;t hit timeout</span>
 					<span class="n">data</span> <span class="o">+=</span> <span class="n">new_data</span>
+					<span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">read_safety_delay</span><span class="p">)</span>  <span class="c1"># BEFORE CHANGING THIS LINE, check the comments after the definition of read_safety_delay in __init__</span>
 			<span class="k">elif</span> <span class="n">length_to_read</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
 				<span class="k">return</span>  <span class="c1"># for some commands, such as QS, we want to not attempt a read after sending</span>
 			<span class="k">else</span><span class="p">:</span>
 				<span class="n">data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ctd</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">length_to_read</span><span class="p">)</span>
 
+			<span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">send_raw</span><span class="p">:</span>  <span class="c1"># if we&#39;re supposed to forward the raw response somewhere</span>
+				<span class="bp">self</span><span class="o">.</span><span class="n">send_raw</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+
 			<span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_clean</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+			<span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">debug</span><span class="p">:</span>
+				<span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;raw response: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">response</span><span class="p">))</span>
 
 			<span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_sampling</span><span class="p">:</span>  <span class="c1"># any time we read data, if we&#39;re sampling, we should check it for records</span>
 				<span class="bp">self</span><span class="o">.</span><span class="n">check_data_for_records</span><span class="p">(</span><span class="n">response</span><span class="p">)</span>
@@ -287,13 +287,26 @@
 				<span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Received unexpected response. Resending command (if any - input was </span><span class="si">{}</span><span class="s2">). Response was </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">command</span><span class="p">,</span> <span class="n">response</span><span class="p">))</span>
 				<span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">send_command</span><span class="p">(</span><span class="n">command</span><span class="p">,</span> <span class="n">length_to_read</span><span class="p">)</span>
 			<span class="k">else</span><span class="p">:</span>
-				<span class="k">return</span> <span class="n">response</span></div>
+				<span class="k">return</span> <span class="n">response</span>
+		<span class="k">else</span><span class="p">:</span>
+			<span class="k">return</span> <span class="p">[]</span>  <span class="c1"># should return an empty list if there&#39;s nothing in waiting</span></div>
 
 	<span class="k">def</span> <span class="nf">_read_all</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 		<span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">send_command</span><span class="p">(</span><span class="n">command</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">length_to_read</span><span class="o">=</span><span class="s2">&quot;ALL&quot;</span><span class="p">)</span>
 
 	<span class="k">def</span> <span class="nf">_clean</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">response</span><span class="p">):</span>
-		<span class="k">return</span> <span class="n">response</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\r\n</span><span class="s2">&quot;</span><span class="p">)</span>  <span class="c1"># first element of list should now be the command, but we&#39;ll let the caller filter that</span>
+		<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">			Calls the `clean` method of the command object first, then attempts to decode the response into unicode, returning</span>
+<span class="sd">			the cleaned data, split by Windows line ending (\r\n). Raises CTDUnicodeError if it can&#39;t decode it</span>
+<span class="sd">		:param response: raw text response from CTD</span>
+<span class="sd">		:return: list of lines from the response, UTF-8</span>
+<span class="sd">		&quot;&quot;&quot;</span>
+		<span class="k">try</span><span class="p">:</span>
+			<span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">command_object</span><span class="p">:</span>  <span class="c1"># might not have found it yet</span>
+				<span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">command_object</span><span class="o">.</span><span class="n">clean_response</span><span class="p">(</span><span class="n">response</span><span class="p">)</span>
+			<span class="k">return</span> <span class="n">response</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\r\n</span><span class="s2">&quot;</span><span class="p">)</span>  <span class="c1"># first element of list should now be the command, but we&#39;ll let the caller filter that</span>
+		<span class="k">except</span> <span class="ne">UnicodeDecodeError</span><span class="p">:</span>  <span class="c1"># raise it as our own so we can store the raw response to print out</span>
+			<span class="k">raise</span> <span class="n">CTDUnicodeError</span><span class="p">(</span><span class="n">response</span><span class="p">)</span>
 
 <div class="viewcode-block" id="CTD.set_datetime"><a class="viewcode-back" href="../index.html#seabird_ctd.CTD.set_datetime">[docs]</a>	<span class="k">def</span> <span class="nf">set_datetime</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">raise_error</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
 		<span class="sd">&quot;&quot;&quot;</span>
@@ -328,28 +341,48 @@
 		<span class="bp">self</span><span class="o">.</span><span class="n">send_command</span><span class="p">(</span><span class="s2">&quot;QS&quot;</span><span class="p">,</span> <span class="n">length_to_read</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="CTD.wake"><a class="viewcode-back" href="../index.html#seabird_ctd.CTD.wake">[docs]</a>	<span class="k">def</span> <span class="nf">wake</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-		<span class="bp">self</span><span class="o">.</span><span class="n">send_command</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\r\n</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">length_to_read</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>  <span class="c1"># Send a single character to wake the device, get the response so that we clear the buffer</span></div>
+		<span class="bp">self</span><span class="o">.</span><span class="n">send_command</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\r\n\r\n</span><span class="s2">&quot;</span><span class="p">)</span>  <span class="c1"># Send a single character to wake the device, get the response so that we clear the buffer</span></div>
 
-<div class="viewcode-block" id="CTD.status"><a class="viewcode-back" href="../index.html#seabird_ctd.CTD.status">[docs]</a>	<span class="k">def</span> <span class="nf">status</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="CTD.status"><a class="viewcode-back" href="../index.html#seabird_ctd.CTD.status">[docs]</a>	<span class="k">def</span> <span class="nf">status</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">status_parts</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
 		<span class="k">try</span><span class="p">:</span>
 			<span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">ctd</span><span class="o">.</span><span class="n">in_waiting</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>  <span class="c1"># any current waiting characters will make parsing weird.</span>
 				<span class="bp">self</span><span class="o">.</span><span class="n">_read_all</span><span class="p">()</span>  <span class="c1"># clear the input buffer, check for any data in the pipeline</span>
 
-			<span class="n">status</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">send_command</span><span class="p">(</span><span class="s2">&quot;DS&quot;</span><span class="p">)</span>
-			<span class="n">status_parts</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">command_object</span><span class="o">.</span><span class="n">parse_status</span><span class="p">(</span><span class="n">status</span><span class="p">)</span>
+			<span class="n">attempt_count</span> <span class="o">=</span> <span class="mi">0</span>
+			<span class="k">while</span> <span class="n">status_parts</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">attempt_count</span> <span class="o">&lt;</span> <span class="mi">3</span><span class="p">:</span>  <span class="c1"># this logic is to make it try a bit harder to get the status information in certain instances -</span>
+				<span class="n">new_status</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">send_command</span><span class="p">(</span><span class="s2">&quot;DS&quot;</span><span class="p">)</span>
+				<span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;new_status is &#39;</span><span class="si">{}</span><span class="s2">&#39;&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">new_status</span><span class="p">))</span>
+				<span class="n">status_parts</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">command_object</span><span class="o">.</span><span class="n">parse_status</span><span class="p">(</span><span class="n">new_status</span><span class="p">)</span>
+				<span class="n">attempt_count</span> <span class="o">+=</span> <span class="mi">1</span>
+				<span class="k">if</span> <span class="ow">not</span> <span class="n">status_parts</span><span class="p">:</span>  <span class="c1"># only sleep if we weren&#39;t successful - give it a moment</span>
+					<span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Retrying status&quot;</span><span class="p">)</span>
+					<span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">command_object</span><span class="p">:</span>
+						<span class="n">operation_wait_time</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">command_object</span><span class="o">.</span><span class="n">operation_wait_time</span>
+					<span class="k">else</span><span class="p">:</span>
+						<span class="n">operation_wait_time</span> <span class="o">=</span> <span class="mi">1</span>
+					<span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="n">operation_wait_time</span><span class="p">)</span>
+
+			<span class="k">if</span> <span class="n">status_parts</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+				<span class="k">raise</span> <span class="n">CTDOperationError</span><span class="p">(</span><span class="s2">&quot;Couldn&#39;t retrieve status message&quot;</span><span class="p">)</span>
+
 			<span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">status_parts</span><span class="p">:</span>  <span class="c1"># the command object parses the status message for the specific model. Returns a dict that we&#39;ll set as values on the object here</span>
 				<span class="nb">setattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">status_parts</span><span class="p">[</span><span class="n">key</span><span class="p">])</span>  <span class="c1"># set each returned value as an attribute on this object</span>
 
 			<span class="bp">self</span><span class="o">.</span><span class="n">last_status</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">(</span><span class="n">timezone</span><span class="o">.</span><span class="n">utc</span><span class="p">)</span>
 
-			<span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="n">status</span><span class="p">)</span>
+			<span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="n">new_status</span><span class="p">)</span>
+		<span class="k">except</span> <span class="ne">IndexError</span><span class="p">:</span>
+			<span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">debug</span><span class="p">:</span>
+				<span class="k">raise</span> <span class="n">CTDConfigurationError</span><span class="p">(</span><span class="s2">&quot;Unable to parse status message. If this is on a new model of CTD for this package, this may be expected, but needs fixing. Here&#39;s what the &#39;DS&#39; command returned </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">new_status</span><span class="p">))</span>
+			<span class="k">else</span><span class="p">:</span>
+				<span class="k">raise</span>
 		<span class="k">except</span><span class="p">:</span>  <span class="c1"># no matter what exception is raised, we&#39;ll most likely want to roll through this</span>
-			<span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">last_status</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>  <span class="c1"># if this isn&#39;t our first check of the status, then warn, but keep going</span>
-				<span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;Failed to retrieve or parse status message. Proceeding, but some information, such as battery voltage, may be out of date. CTD response was </span><span class="si">{}</span><span class="s2">. Error given was </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">status</span><span class="p">,</span> <span class="n">traceback</span><span class="o">.</span><span class="n">format_exc</span><span class="p">()))</span>
+			<span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">debug</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">last_status</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>  <span class="c1"># if this isn&#39;t our first check of the status, then warn, but keep going</span>
+				<span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;Failed to retrieve or parse status message. Proceeding, but some information, such as battery voltage, may be out of date. CTD response was </span><span class="si">{}</span><span class="s2">. Error given was </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">new_status</span><span class="p">,</span> <span class="n">traceback</span><span class="o">.</span><span class="n">format_exc</span><span class="p">()))</span>
 			<span class="k">else</span><span class="p">:</span>  <span class="c1"># if it is our first time getting status data, raise the exception up, because we shouldn&#39;t proceed without it</span>
 				<span class="k">raise</span>
 
-		<span class="k">return</span> <span class="n">status</span></div>
+		<span class="k">return</span> <span class="n">new_status</span></div>
 
 <div class="viewcode-block" id="CTD.setup_interrupt"><a class="viewcode-back" href="../index.html#seabird_ctd.CTD.setup_interrupt">[docs]</a>	<span class="k">def</span> <span class="nf">setup_interrupt</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">rabbitmq_server</span><span class="p">,</span> <span class="n">username</span><span class="p">,</span> <span class="n">password</span><span class="p">,</span> <span class="n">vhost</span><span class="p">,</span> <span class="n">queue</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
 		<span class="sd">&quot;&quot;&quot;</span>
@@ -393,7 +426,7 @@
 
 		<span class="k">return</span> <span class="kc">False</span>  <span class="c1"># default is no interrupt</span></div>
 
-<div class="viewcode-block" id="CTD.start_autosample"><a class="viewcode-back" href="../index.html#seabird_ctd.CTD.start_autosample">[docs]</a>	<span class="k">def</span> <span class="nf">start_autosample</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">interval</span><span class="o">=</span><span class="mi">60</span><span class="p">,</span> <span class="n">realtime</span><span class="o">=</span><span class="s2">&quot;Y&quot;</span><span class="p">,</span> <span class="n">handler</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">no_stop</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+<div class="viewcode-block" id="CTD.start_autosample"><a class="viewcode-back" href="../index.html#seabird_ctd.CTD.start_autosample">[docs]</a>	<span class="k">def</span> <span class="nf">start_autosample</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">interval</span><span class="o">=</span><span class="mi">60</span><span class="p">,</span> <span class="n">realtime</span><span class="o">=</span><span class="s2">&quot;Y&quot;</span><span class="p">,</span> <span class="n">handler</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">no_stop</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">max_iterations</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
 		<span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">			This should set the sampling interval, then turn on autosampling, then just keep reading the line every interval.</span>
 <span class="sd">			Before reading the line, it should also check for new commands in a command queue, so it can see if it&#39;s</span>
@@ -414,6 +447,10 @@
 <span class="sd">		:param no_stop: Allows you to tell it to ignore settings if it&#39;s already sampling. If no_stop is True, will just</span>
 <span class="sd">						start listening to new records coming in (if realtime == &quot;Y&quot;). That way, the CTD won&#39;t stop sampling</span>
 <span class="sd">						for any length of time, but will retain prior settings (ignoring the new interval).</span>
+<span class="sd">		:param max_iterations: Primarily used for testing, sets how many samples it should try to read before exiting the</span>
+<span class="sd">						listening loop and returning control to the program. This could also be used by another program</span>
+<span class="sd">						to do intermittent checks for data since it&#39;s the only way to exit the listen loop without sending</span>
+<span class="sd">						a break event to the program. Default is None, which indicates to run indefinitely</span>
 <span class="sd">		:return:</span>
 <span class="sd">		&quot;&quot;&quot;</span>
 
@@ -424,11 +461,16 @@
 
 		<span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_sampling</span><span class="p">:</span>  <span class="c1"># will be updated if we successfully stop sampling</span>
 			<span class="bp">self</span><span class="o">.</span><span class="n">send_command</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">command_object</span><span class="o">.</span><span class="n">sample_interval</span><span class="p">(</span><span class="n">interval</span><span class="p">),</span> <span class="n">length_to_read</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>  <span class="c1"># set the interval to sample at</span>
-			<span class="bp">self</span><span class="o">.</span><span class="n">send_command</span><span class="p">(</span><span class="s2">&quot;TXREALTIME=</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">realtime</span><span class="p">),</span> <span class="n">length_to_read</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>  <span class="c1"># set the interval to sample at</span>
-			<span class="bp">self</span><span class="o">.</span><span class="n">send_command</span><span class="p">(</span><span class="s2">&quot;STARTNOW&quot;</span><span class="p">,</span> <span class="n">length_to_read</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span>  <span class="c1"># start sampling - we need to read to clear the buffer</span>
-			<span class="bp">self</span><span class="o">.</span><span class="n">send_command</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\r\n</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">length_to_read</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>  <span class="c1"># send a newline so that we get a new prompt again</span>
-			<span class="bp">self</span><span class="o">.</span><span class="n">status</span><span class="p">()</span>  <span class="c1"># make sure the status data is up to date. Doing it this way ratehr than setting manually so that if it failed for some reason, the object would still be correct</span>
-							<span class="c1"># if is_sampling doesn&#39;t get updated here, data reading won&#39;t work correctly, so this is important</span>
+			<span class="bp">self</span><span class="o">.</span><span class="n">send_command</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">command_object</span><span class="o">.</span><span class="n">txrealtime</span><span class="p">(</span><span class="n">realtime</span><span class="p">),</span> <span class="n">length_to_read</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>  <span class="c1"># set the interval to sample at</span>
+			<span class="bp">self</span><span class="o">.</span><span class="n">send_command</span><span class="p">(</span><span class="s2">&quot;STARTNOW&quot;</span><span class="p">,</span> <span class="n">length_to_read</span><span class="o">=</span><span class="s2">&quot;ALL&quot;</span><span class="p">)</span>  <span class="c1"># start sampling - we need to read to clear the buffer</span>
+			<span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">command_object</span><span class="o">.</span><span class="n">supports_commands_while_logging</span><span class="p">:</span>
+				<span class="bp">self</span><span class="o">.</span><span class="n">send_command</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\r\n</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">length_to_read</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>  <span class="c1"># send a newline so that we get a new prompt again</span>
+				<span class="bp">self</span><span class="o">.</span><span class="n">status</span><span class="p">()</span>  <span class="c1"># make sure the status data is up to date. Doing it this way rather than setting manually so that if it failed for some reason, the object would still be correct</span>
+								<span class="c1"># if is_sampling doesn&#39;t get updated here, data reading won&#39;t work correctly, so this is important</span>
+			<span class="k">else</span><span class="p">:</span>
+				<span class="bp">self</span><span class="o">.</span><span class="n">is_sampling</span> <span class="o">=</span> <span class="kc">True</span>  <span class="c1"># since we can&#39;t very easily check that it&#39;s sampling for this device, assume it&#39;s true</span>
+		<span class="k">else</span><span class="p">:</span>
+			<span class="bp">self</span><span class="o">.</span><span class="n">sleep</span><span class="p">()</span>  <span class="c1"># if it&#39;s already sampling, be on the safe side and put the device into QS mode now because devices that don&#39;t support commands while logging will need this after our startup sequence</span>
 
 		<span class="k">if</span> <span class="n">realtime</span> <span class="o">==</span> <span class="s2">&quot;Y&quot;</span><span class="p">:</span>
 			<span class="k">if</span> <span class="ow">not</span> <span class="n">handler</span><span class="p">:</span>  <span class="c1"># if they specified realtime data transmission, but didn&#39;t provide a handler, abort.</span>
@@ -436,9 +478,9 @@
 			<span class="k">else</span><span class="p">:</span>
 				<span class="bp">self</span><span class="o">.</span><span class="n">handler</span> <span class="o">=</span> <span class="n">handler</span>  <span class="c1"># make it available to anything else that finds records. Whenever we run any command we need to check for records because it&#39;s possible we&#39;ll get the output before something else</span>
 
-			<span class="bp">self</span><span class="o">.</span><span class="n">listen</span><span class="p">(</span><span class="n">interval</span><span class="p">)</span></div>
+			<span class="bp">self</span><span class="o">.</span><span class="n">listen</span><span class="p">(</span><span class="n">interval</span><span class="p">,</span> <span class="n">max_iterations</span><span class="o">=</span><span class="n">max_iterations</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="CTD.listen"><a class="viewcode-back" href="../index.html#seabird_ctd.CTD.listen">[docs]</a>	<span class="k">def</span> <span class="nf">listen</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">interval</span><span class="o">=</span><span class="mi">60</span><span class="p">):</span>
+<div class="viewcode-block" id="CTD.listen"><a class="viewcode-back" href="../index.html#seabird_ctd.CTD.listen">[docs]</a>	<span class="k">def</span> <span class="nf">listen</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">interval</span><span class="o">=</span><span class="mi">60</span><span class="p">,</span> <span class="n">max_iterations</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
 		<span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">			Continuously polls for new data on the line at interval. Used when autosampling with realtime transmission to</span>
 <span class="sd">			receive records.</span>
@@ -448,7 +490,10 @@
 
 <span class="sd">			:param handler: (See start_autosample documentation). A functiion to process new records as they are available.</span>
 <span class="sd">			:param interval: The sampling interval, in seconds.</span>
-
+<span class="sd">			:param max_iterations: Primarily used for testing, sets how many samples it should try to read before exiting the</span>
+<span class="sd">						listening loop and returning control to the program. This could also be used by another program</span>
+<span class="sd">						to do intermittent checks for data since it&#39;s the only way to exit the listen loop without sending</span>
+<span class="sd">						a break event to the program. Default is None, which indicates to run indefinitely</span>
 <span class="sd">			:return:</span>
 <span class="sd">		&quot;&quot;&quot;</span>
 
@@ -524,8 +569,18 @@
 			<span class="bp">self</span><span class="o">.</span><span class="n">interrupt_connection</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>  <span class="c1"># starts listening for commands</span>
 
 		<span class="k">else</span><span class="p">:</span>  <span class="c1"># if no interrupt loop</span>
-			<span class="k">while</span> <span class="bp">self</span><span class="o">.</span><span class="n">check_interrupt</span><span class="p">()</span> <span class="ow">is</span> <span class="kc">False</span><span class="p">:</span>
-				<span class="bp">self</span><span class="o">.</span><span class="n">read_records</span><span class="p">()</span>
+			<span class="n">num_iterations</span> <span class="o">=</span> <span class="mi">0</span>
+			<span class="k">while</span> <span class="bp">self</span><span class="o">.</span><span class="n">check_interrupt</span><span class="p">()</span> <span class="ow">is</span> <span class="kc">False</span><span class="p">:</span>  <span class="c1"># this may not be necessary - I think this is handled elsewhere</span>
+				<span class="k">try</span><span class="p">:</span>
+					<span class="bp">self</span><span class="o">.</span><span class="n">read_records</span><span class="p">()</span>
+				<span class="k">except</span> <span class="n">CTDUnicodeError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+					<span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">b</span><span class="s2">&quot;Unable to decode response to unicode. Often, but not always, this means some sort of line interruption occurred. Here is the raw data received: &#39;&quot;</span> <span class="o">+</span> <span class="n">e</span><span class="o">.</span><span class="n">response</span> <span class="o">+</span> <span class="sa">b</span><span class="s2">&quot;&#39;. Trying to reconnect to recover the connection.&quot;</span><span class="p">)</span>
+					<span class="bp">self</span><span class="o">.</span><span class="n">recover</span><span class="p">()</span>  <span class="c1"># UnicodeDecodeError most likely means a line interruption caused invalid data. Try to recover the connection</span>
+
+				<span class="n">num_iterations</span> <span class="o">+=</span> <span class="mi">1</span>
+				<span class="k">if</span> <span class="n">max_iterations</span> <span class="ow">and</span> <span class="n">num_iterations</span> <span class="o">&gt;</span> <span class="n">max_iterations</span><span class="p">:</span>  <span class="c1"># if this is only supposed to run a few times</span>
+					<span class="k">break</span>
+
 				<span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="n">interval</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="CTD.read_records"><a class="viewcode-back" href="../index.html#seabird_ctd.CTD.read_records">[docs]</a>	<span class="k">def</span> <span class="nf">read_records</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -534,11 +589,18 @@
 
 		<span class="n">data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_read_all</span><span class="p">()</span>  <span class="c1"># this will automatically check for data</span>
 
-		<span class="k">if</span> <span class="p">(</span><span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">(</span><span class="n">timezone</span><span class="o">.</span><span class="n">utc</span><span class="p">)</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">last_status</span><span class="p">)</span><span class="o">.</span><span class="n">total_seconds</span><span class="p">()</span> <span class="o">&gt;</span> <span class="mi">3600</span><span class="p">:</span>  <span class="c1"># if it&#39;s been more than an hour since we checked the status, refresh it so we get new battery stats</span>
-			<span class="bp">self</span><span class="o">.</span><span class="n">status</span><span class="p">()</span>  <span class="c1"># this can be run while the device is logging</span></div>
+		<span class="k">if</span> <span class="p">(</span><span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">(</span><span class="n">timezone</span><span class="o">.</span><span class="n">utc</span><span class="p">)</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">last_status</span><span class="p">)</span><span class="o">.</span><span class="n">total_seconds</span><span class="p">()</span> <span class="o">&gt;</span> <span class="mi">3600</span> <span class="ow">and</span> \
+				<span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">is_sampling</span> <span class="ow">is</span> <span class="kc">True</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">command_object</span><span class="o">.</span><span class="n">supports_commands_while_logging</span><span class="p">)</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_sampling</span> <span class="ow">is</span> <span class="kc">False</span><span class="p">):</span>  <span class="c1"># if it&#39;s been more than an hour since we checked the status, refresh it so we get new battery stats - don&#39;t do it if we&#39;re sampling and the device doesn&#39;t do well with commands while sampling</span>
+			<span class="bp">self</span><span class="o">.</span><span class="n">wake</span><span class="p">()</span>
+			<span class="k">try</span><span class="p">:</span>
+				<span class="bp">self</span><span class="o">.</span><span class="n">status</span><span class="p">()</span>  <span class="c1"># this can be run while the device is logging</span>
+			<span class="k">except</span> <span class="ne">IndexError</span><span class="p">:</span>
+				<span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;Unable to update status information - this is likely fine, but the logger state may not be current.&quot;</span><span class="p">)</span>
+
+		<span class="k">return</span> <span class="n">data</span></div>
 
 <div class="viewcode-block" id="CTD.check_data_for_records"><a class="viewcode-back" href="../index.html#seabird_ctd.CTD.check_data_for_records">[docs]</a>	<span class="k">def</span> <span class="nf">check_data_for_records</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
-		<span class="n">records</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">find_and_insert_records</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+		<span class="n">records</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">find_records</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
 
 		<span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">handler</span><span class="p">:</span>  <span class="c1"># if it&#39;s sampling and we&#39;ve received records, but not yet configured a handler, hold onto the records until a handler is configured</span>
 			<span class="bp">self</span><span class="o">.</span><span class="n">held_records</span> <span class="o">+=</span> <span class="n">records</span>
@@ -548,39 +610,53 @@
 				<span class="bp">self</span><span class="o">.</span><span class="n">held_records</span> <span class="o">=</span> <span class="p">[]</span>
 			<span class="bp">self</span><span class="o">.</span><span class="n">handler</span><span class="p">(</span><span class="n">records</span><span class="p">)</span>  <span class="c1"># Call the provided handler function to do whatever the caller wants to do with the data</span></div>
 
-<div class="viewcode-block" id="CTD.find_and_insert_records"><a class="viewcode-back" href="../index.html#seabird_ctd.CTD.find_and_insert_records">[docs]</a>	<span class="k">def</span> <span class="nf">find_and_insert_records</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+<div class="viewcode-block" id="CTD.find_records"><a class="viewcode-back" href="../index.html#seabird_ctd.CTD.find_records">[docs]</a>	<span class="k">def</span> <span class="nf">find_records</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+		<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">			Given the parsing regex defined in the command object for this CTD, runs it and returns a list of dicts</span>
+<span class="sd">			containing sampled values. The dict will always have the keys defined in the command object&#39;s &quot;keys&quot; attribute.</span>
+<span class="sd">			This varies model to model, so your code may need to check for keys, depending. In the event of values that</span>
+<span class="sd">			are not always enabled (like salinity, or sound velocity), the keys are still present, but set to None if</span>
+<span class="sd">			those values are not enabled.</span>
+<span class="sd">		:param data:</span>
+<span class="sd">		:return:</span>
+<span class="sd">		&quot;&quot;&quot;</span>
+		
+		<span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Searching for records in </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">data</span><span class="p">))</span>
 		<span class="n">records</span> <span class="o">=</span> <span class="p">[]</span>
 		<span class="k">for</span> <span class="n">element</span> <span class="ow">in</span> <span class="n">data</span><span class="p">:</span>
+			<span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Trying to match &#39;</span><span class="si">{}</span><span class="s2">&#39; against regex &#39;</span><span class="si">{}</span><span class="s2">&#39;&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">element</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">command_object</span><span class="o">.</span><span class="n">record_regex</span><span class="p">()))</span>
 			<span class="n">matches</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">command_object</span><span class="o">.</span><span class="n">record_regex</span><span class="p">(),</span> <span class="n">element</span><span class="p">)</span>
 			<span class="k">if</span> <span class="n">matches</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
 				<span class="k">continue</span>
 
 			<span class="n">new_model</span> <span class="o">=</span> <span class="p">{}</span>
-			<span class="k">if</span> <span class="s2">&quot;temperature&quot;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">command_object</span><span class="o">.</span><span class="n">keys</span><span class="p">:</span>
-				<span class="n">new_model</span><span class="p">[</span><span class="s2">&quot;temperature&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">matches</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="s2">&quot;temperature&quot;</span><span class="p">)</span>
-			<span class="k">else</span><span class="p">:</span>
-				<span class="n">new_model</span><span class="p">[</span><span class="s2">&quot;temperature&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
-
-			<span class="k">if</span> <span class="s2">&quot;pressure&quot;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">command_object</span><span class="o">.</span><span class="n">keys</span><span class="p">:</span>
-				<span class="n">new_model</span><span class="p">[</span><span class="s2">&quot;pressure&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">matches</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="s2">&quot;pressure&quot;</span><span class="p">)</span>
-			<span class="k">else</span><span class="p">:</span>
-				<span class="n">new_model</span><span class="p">[</span><span class="s2">&quot;pressure&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
-
-			<span class="k">if</span> <span class="s2">&quot;conductivity&quot;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">command_object</span><span class="o">.</span><span class="n">keys</span><span class="p">:</span>
-				<span class="n">new_model</span><span class="p">[</span><span class="s2">&quot;conductivity&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">matches</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="s2">&quot;conductivity&quot;</span><span class="p">)</span>
-			<span class="k">else</span><span class="p">:</span>
-				<span class="n">new_model</span><span class="p">[</span><span class="s2">&quot;conductivity&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
-
-			<span class="k">if</span> <span class="s2">&quot;datetime&quot;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">command_object</span><span class="o">.</span><span class="n">keys</span><span class="p">:</span>
-				<span class="n">dt_object</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">strptime</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">matches</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="s2">&quot;datetime&quot;</span><span class="p">)),</span> <span class="s2">&quot;</span><span class="si">%d</span><span class="s2"> %b %Y, %H:%M:%S&quot;</span><span class="p">)</span>
-				<span class="n">dt_aware</span> <span class="o">=</span> <span class="n">pytz</span><span class="o">.</span><span class="n">utc</span><span class="o">.</span><span class="n">localize</span><span class="p">(</span><span class="n">dt_object</span><span class="p">)</span>
-				<span class="n">new_model</span><span class="p">[</span><span class="s2">&quot;datetime&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">dt_aware</span>
-			<span class="k">else</span><span class="p">:</span>
-				<span class="n">new_model</span><span class="p">[</span><span class="s2">&quot;datetime&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+			<span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">command_object</span><span class="o">.</span><span class="n">keys</span><span class="p">:</span>
+				<span class="k">try</span><span class="p">:</span>
+					<span class="n">value</span> <span class="o">=</span> <span class="n">matches</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+					<span class="k">if</span> <span class="n">key</span> <span class="o">==</span> <span class="s2">&quot;datetime&quot;</span><span class="p">:</span>
+						<span class="n">dt_object</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">strptime</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">value</span><span class="p">),</span> <span class="s2">&quot;</span><span class="si">%d</span><span class="s2"> %b %Y, %H:%M:%S&quot;</span><span class="p">)</span>
+						<span class="n">value</span> <span class="o">=</span> <span class="n">pytz</span><span class="o">.</span><span class="n">utc</span><span class="o">.</span><span class="n">localize</span><span class="p">(</span><span class="n">dt_object</span><span class="p">)</span>
+					<span class="n">new_model</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
+				<span class="k">except</span> <span class="ne">IndexError</span><span class="p">:</span>
+					<span class="n">new_model</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># it just means that item isn&#39;t supported or enabled on this sample</span>
 
 			<span class="n">records</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">new_model</span><span class="p">)</span>
 
 		<span class="k">return</span> <span class="n">records</span></div>
+
+<div class="viewcode-block" id="CTD.recover"><a class="viewcode-back" href="../index.html#seabird_ctd.CTD.recover">[docs]</a>	<span class="k">def</span> <span class="nf">recover</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+		<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">			This is for using if the line is interrupted by something, but the script stays running. In our production,</span>
+<span class="sd">			if power goes out to an intermediate set of devices, the CTD can go down. This method closes the existing</span>
+<span class="sd">			ctd connection, reopens it, tries to reestablish communication with the device. Triggered if we get a</span>
+<span class="sd">			UnicodeDecodeError parsing the data.</span>
+<span class="sd">		:return:</span>
+<span class="sd">		&quot;&quot;&quot;</span>
+
+		<span class="bp">self</span><span class="o">.</span><span class="n">ctd</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">ctd</span> <span class="o">=</span> <span class="n">serial</span><span class="o">.</span><span class="n">Serial</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">com_port</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">baud</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">timeout</span><span class="p">)</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">wake</span><span class="p">()</span>
+		<span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>  <span class="c1"># give it a moment after trying to recover</span></div>
 
 <div class="viewcode-block" id="CTD.stop_autosample"><a class="viewcode-back" href="../index.html#seabird_ctd.CTD.stop_autosample">[docs]</a>	<span class="k">def</span> <span class="nf">stop_autosample</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 		<span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Stopping existing autosampling&quot;</span><span class="p">)</span>
@@ -616,16 +692,20 @@
 <span class="sd">		:return:</span>
 <span class="sd">		&quot;&quot;&quot;</span>
 
-		<span class="bp">self</span><span class="o">.</span><span class="n">sleep</span><span class="p">()</span>
-		<span class="bp">self</span><span class="o">.</span><span class="n">ctd</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
-		<span class="bp">self</span><span class="o">.</span><span class="n">ctd</span> <span class="o">=</span> <span class="kc">None</span></div>
+		<span class="k">try</span><span class="p">:</span>
+			<span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">setup_complete</span><span class="p">:</span>  <span class="c1"># only send a sleep command if setup finished because if it hasn&#39;t we won&#39;t be able to send the command</span>
+				<span class="bp">self</span><span class="o">.</span><span class="n">sleep</span><span class="p">()</span>
+		<span class="k">except</span> <span class="ne">NameError</span><span class="p">:</span>  <span class="c1"># raised when trying to log while closing</span>
+			<span class="k">pass</span>  <span class="c1"># ignore logging messages during deletion</span>
+
+		<span class="bp">self</span><span class="o">.</span><span class="n">ctd</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>  <span class="c1"># now close the actual serial connection so it&#39;s available again</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">ctd</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># and zero it out on this object so that if .close() is manually called, tests for if the connection is open work correctly.</span></div>
 
 	<span class="k">def</span> <span class="nf">__del__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 		<span class="sd">&quot;&quot;&quot;&quot;</span>
 <span class="sd">			Check if the CTD is still open. If the user called close on their own, then this will create an error.</span>
-
 <span class="sd">		&quot;&quot;&quot;</span>
-		<span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">ctd</span><span class="p">:</span>
+		<span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;ctd&quot;</span><span class="p">)</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">ctd</span><span class="p">:</span>  <span class="c1"># if we&#39;ve already defined the ctd attribute and it&#39;s still valid (not manually closed, etc)</span>
 			<span class="bp">self</span><span class="o">.</span><span class="n">close</span><span class="p">()</span></div>
 
 <div class="viewcode-block" id="interrupt_checker"><a class="viewcode-back" href="../index.html#seabird_ctd.interrupt_checker">[docs]</a><span class="k">def</span> <span class="nf">interrupt_checker</span><span class="p">(</span><span class="n">server</span><span class="p">,</span> <span class="n">username</span><span class="p">,</span> <span class="n">password</span><span class="p">,</span> <span class="n">vhost</span><span class="p">,</span> <span class="n">queue</span><span class="p">,</span> <span class="n">interval</span><span class="p">):</span>

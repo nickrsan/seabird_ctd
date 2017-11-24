@@ -16,7 +16,7 @@ Welcome to seabird_ctd's documentation!
    :members:
    :undoc-members:
 
-.. automodule:: ctd_models
+.. automodule:: seabird_ctd.ctd_models
    :members:
    :undoc-members:
 

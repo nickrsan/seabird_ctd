@@ -54,6 +54,7 @@
  | <a href="#F"><strong>F</strong></a>
  | <a href="#I"><strong>I</strong></a>
  | <a href="#L"><strong>L</strong></a>
+ | <a href="#O"><strong>O</strong></a>
  | <a href="#P"><strong>P</strong></a>
  | <a href="#R"><strong>R</strong></a>
  | <a href="#S"><strong>S</strong></a>
@@ -82,17 +83,29 @@
 </li>
       <li><a href="index.html#seabird_ctd.CTD.check_interrupt">check_interrupt() (seabird_ctd.CTD method)</a>
 </li>
+      <li><a href="index.html#seabird_ctd.ctd_models.CTDCommandObject.clean_response">clean_response() (seabird_ctd.ctd_models.CTDCommandObject method)</a>
+
+      <ul>
+        <li><a href="index.html#seabird_ctd.ctd_models.SBE3915.clean_response">(seabird_ctd.ctd_models.SBE3915 method)</a>
+</li>
+      </ul></li>
+      <li><a href="index.html#seabird_ctd.ctd_models.CTDCommandObject.clean_status">clean_status() (seabird_ctd.ctd_models.CTDCommandObject method)</a>
+</li>
       <li><a href="index.html#seabird_ctd.CTD.close">close() (seabird_ctd.CTD method)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="index.html#seabird_ctd.CTD">CTD (class in seabird_ctd)</a>
 </li>
+      <li><a href="index.html#seabird_ctd.ctd_models.CTDCommandObject">CTDCommandObject (class in seabird_ctd.ctd_models)</a>
+</li>
       <li><a href="index.html#seabird_ctd.CTDConfigurationError">CTDConfigurationError</a>
 </li>
       <li><a href="index.html#seabird_ctd.CTDConnectionError">CTDConnectionError</a>
 </li>
       <li><a href="index.html#seabird_ctd.CTDOperationError">CTDOperationError</a>
+</li>
+      <li><a href="index.html#seabird_ctd.CTDUnicodeError">CTDUnicodeError</a>
 </li>
       <li><a href="index.html#seabird_ctd.CTDUnsupportedError">CTDUnsupportedError</a>
 </li>
@@ -110,7 +123,7 @@
 <h2 id="F">F</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="index.html#seabird_ctd.CTD.find_and_insert_records">find_and_insert_records() (seabird_ctd.CTD method)</a>
+      <li><a href="index.html#seabird_ctd.CTD.find_records">find_records() (seabird_ctd.CTD method)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -131,13 +144,25 @@
   </ul></td>
 </tr></table>
 
+<h2 id="O">O</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="index.html#seabird_ctd.ctd_models.CTDCommandObject.operation_wait_times">operation_wait_times (seabird_ctd.ctd_models.CTDCommandObject attribute)</a>
+</li>
+  </ul></td>
+</tr></table>
+
 <h2 id="P">P</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="index.html#seabird_ctd.SBE37.parse_status">parse_status() (seabird_ctd.SBE37 method)</a>
+      <li><a href="index.html#seabird_ctd.ctd_models.SBE19plus.parse_status">parse_status() (seabird_ctd.ctd_models.SBE19plus method)</a>
 
       <ul>
-        <li><a href="index.html#seabird_ctd.SBE39.parse_status">(seabird_ctd.SBE39 method)</a>
+        <li><a href="index.html#seabird_ctd.ctd_models.SBE37S.parse_status">(seabird_ctd.ctd_models.SBE37S method)</a>
+</li>
+        <li><a href="index.html#seabird_ctd.ctd_models.SBE39.parse_status">(seabird_ctd.ctd_models.SBE39 method)</a>
+</li>
+        <li><a href="index.html#seabird_ctd.ctd_models.SBE3915.parse_status">(seabird_ctd.ctd_models.SBE3915 method)</a>
 </li>
       </ul></li>
   </ul></td>
@@ -148,14 +173,22 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="index.html#seabird_ctd.CTD.read_records">read_records() (seabird_ctd.CTD method)</a>
 </li>
-      <li><a href="index.html#seabird_ctd.SBE39.record_regex">record_regex() (seabird_ctd.SBE39 method)</a>
-</li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="index.html#seabird_ctd.SBE37.retrieve_samples">retrieve_samples() (seabird_ctd.SBE37 method)</a>
+      <li><a href="index.html#seabird_ctd.ctd_models.SBE19plus.record_regex">record_regex() (seabird_ctd.ctd_models.SBE19plus method)</a>
 
       <ul>
-        <li><a href="index.html#seabird_ctd.SBE39.retrieve_samples">(seabird_ctd.SBE39 method)</a>
+        <li><a href="index.html#seabird_ctd.ctd_models.SBE37S.record_regex">(seabird_ctd.ctd_models.SBE37S method)</a>
+</li>
+        <li><a href="index.html#seabird_ctd.ctd_models.SBE39.record_regex">(seabird_ctd.ctd_models.SBE39 method)</a>
+</li>
+      </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="index.html#seabird_ctd.CTD.recover">recover() (seabird_ctd.CTD method)</a>
+</li>
+      <li><a href="index.html#seabird_ctd.ctd_models.SBE37S.retrieve_samples">retrieve_samples() (seabird_ctd.ctd_models.SBE37S method)</a>
+
+      <ul>
+        <li><a href="index.html#seabird_ctd.ctd_models.SBE39.retrieve_samples">(seabird_ctd.ctd_models.SBE39 method)</a>
 </li>
       </ul></li>
   </ul></td>
@@ -164,30 +197,50 @@
 <h2 id="S">S</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="index.html#seabird_ctd.SBE37.sample_interval">sample_interval() (seabird_ctd.SBE37 method)</a>
+      <li><a href="index.html#seabird_ctd.ctd_models.SBE19plus.sample_interval">sample_interval() (seabird_ctd.ctd_models.SBE19plus method)</a>
 
       <ul>
-        <li><a href="index.html#seabird_ctd.SBE39.sample_interval">(seabird_ctd.SBE39 method)</a>
+        <li><a href="index.html#seabird_ctd.ctd_models.SBE37S.sample_interval">(seabird_ctd.ctd_models.SBE37S method)</a>
+</li>
+        <li><a href="index.html#seabird_ctd.ctd_models.SBE39.sample_interval">(seabird_ctd.ctd_models.SBE39 method)</a>
 </li>
       </ul></li>
-      <li><a href="index.html#seabird_ctd.SBE37">SBE37 (class in seabird_ctd)</a>
+      <li><a href="index.html#seabird_ctd.ctd_models.SBE19plus">SBE19plus (class in seabird_ctd.ctd_models)</a>
 </li>
-      <li><a href="index.html#seabird_ctd.SBE39">SBE39 (class in seabird_ctd)</a>
+      <li><a href="index.html#seabird_ctd.ctd_models.SBE37S">SBE37S (class in seabird_ctd.ctd_models)</a>
+</li>
+      <li><a href="index.html#seabird_ctd.ctd_models.SBE39">SBE39 (class in seabird_ctd.ctd_models)</a>
+</li>
+      <li><a href="index.html#seabird_ctd.ctd_models.SBE3915">SBE3915 (class in seabird_ctd.ctd_models)</a>
 </li>
       <li><a href="index.html#module-seabird_ctd">seabird_ctd (module)</a>, <a href="index.html#module-seabird_ctd">[1]</a>
+</li>
+      <li><a href="index.html#module-seabird_ctd.ctd_models">seabird_ctd.ctd_models (module)</a>
 </li>
       <li><a href="index.html#seabird_ctd.CTD.send_command">send_command() (seabird_ctd.CTD method)</a>
 </li>
       <li><a href="index.html#seabird_ctd.CTD.set_datetime">set_datetime() (seabird_ctd.CTD method)</a>
 
       <ul>
-        <li><a href="index.html#seabird_ctd.SBE37.set_datetime">(seabird_ctd.SBE37 method)</a>
+        <li><a href="index.html#seabird_ctd.ctd_models.SBE19plus.set_datetime">(seabird_ctd.ctd_models.SBE19plus method)</a>
 </li>
-        <li><a href="index.html#seabird_ctd.SBE39.set_datetime">(seabird_ctd.SBE39 method)</a>
+        <li><a href="index.html#seabird_ctd.ctd_models.SBE37S.set_datetime">(seabird_ctd.ctd_models.SBE37S method)</a>
+</li>
+        <li><a href="index.html#seabird_ctd.ctd_models.SBE39.set_datetime">(seabird_ctd.ctd_models.SBE39 method)</a>
 </li>
       </ul></li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="index.html#seabird_ctd.ctd_models.SBE19plus.setup">setup() (seabird_ctd.ctd_models.SBE19plus method)</a>
+
+      <ul>
+        <li><a href="index.html#seabird_ctd.ctd_models.SBE37S.setup">(seabird_ctd.ctd_models.SBE37S method)</a>
+</li>
+        <li><a href="index.html#seabird_ctd.ctd_models.SBE39.setup">(seabird_ctd.ctd_models.SBE39 method)</a>
+</li>
+        <li><a href="index.html#seabird_ctd.ctd_models.SBE3915.setup">(seabird_ctd.ctd_models.SBE3915 method)</a>
+</li>
+      </ul></li>
       <li><a href="index.html#seabird_ctd.CTD.setup_interrupt">setup_interrupt() (seabird_ctd.CTD method)</a>
 </li>
       <li><a href="index.html#seabird_ctd.CTD.sleep">sleep() (seabird_ctd.CTD method)</a>
@@ -206,6 +259,14 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="index.html#seabird_ctd.CTD.take_sample">take_sample() (seabird_ctd.CTD method)</a>
 </li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="index.html#seabird_ctd.ctd_models.CTDCommandObject.txrealtime">txrealtime() (seabird_ctd.ctd_models.CTDCommandObject method)</a>
+
+      <ul>
+        <li><a href="index.html#seabird_ctd.ctd_models.SBE19plus.txrealtime">(seabird_ctd.ctd_models.SBE19plus method)</a>
+</li>
+      </ul></li>
   </ul></td>
 </tr></table>
 

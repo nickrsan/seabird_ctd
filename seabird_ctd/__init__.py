@@ -32,7 +32,7 @@ except:
 	interrupt = None
 	logging.warning("Unable to load a required module for interrupt queue. Can be ignored if not using RabbitMQ, but this message is unusual regardless.")
 
-from seabird_ctd.ctd_models import supported_ctds
+from seabird_ctd.ctd_models import *
 
 class CTDConfigurationError(BaseException):
 	pass
