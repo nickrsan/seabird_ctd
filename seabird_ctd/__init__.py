@@ -52,8 +52,7 @@ class CTDUnicodeError(BaseException):
 
 
 class CTD(object):
-	def __init__(self, COM_port=None, baud=9600, timeout=5, setup_delay=2, wait_numerator=200, send_raw=None, debug=False):
-		"""
+	"""
 		If COM_port is not provided, checks for an environment variable named SEABIRD_CTD_PORT. Otherwise raises
 		CTDConnectionError
 
@@ -69,7 +68,9 @@ class CTD(object):
 							work for most devices and baud rates.
 		:param send_raw: a writeable file handle that the raw response, preprocessing, from the CTD will be sent to. Useful for debugging and extending this module to new CTDs, as well as for unit testing
 		:param debug: boolean. Changes bits of behavior for debugging purposes.
-		"""
+	"""
+
+	def __init__(self, COM_port=None, baud=9600, timeout=5, setup_delay=2, wait_numerator=200, send_raw=None, debug=False):
 
 		self.debug = debug
 		if self.debug:
