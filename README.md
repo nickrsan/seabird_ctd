@@ -8,7 +8,10 @@ longterm fixed deployment. The authors use this code to feed the CTD data
 into a database via django in realtime and implement the monitoring as a
 management command.
 
-## Usage
+## Usage and Documentation
+In addition to the examples below, more complete documentation of the API
+can be found at https://seabird_ctd.readthedocs.io.
+
 The following example shows some basic usage of the seabird_ctd code
 ```python
 
@@ -143,10 +146,15 @@ DISCONNECT is closely related to stop monitoring, but also sends a sleep
 command to the device and closes the serial connection.
 
 ## Extending the code to a new CTD
-CTDs have slightly different command styles and syntaxes. Until further documentation
-is written, the best way to see how this is handled is to take a look at
-the objects for each CTD in the code. They define specific parsing information
-and command syntax for the CTDs.
+CTDs have slightly different command styles, behaviors, and syntaxes and
+the authors of this package don't have access to all of the CTDs Seabird
+produces. While the package has been tested with a handful of CTDs and
+firmware versions (SeacatPlus (SBE19plus), SBE39 firmware 1.5, SBE39 firmware 6,
+and SBE37), other models do not have support yet. This code is meant to provide
+a structure where it can be extended to support other, newer models, quickly (15 minutes to a few hours).
+Until further documentation is written, the best way to see how this is handled is to take a look at
+the objects for each CTD in the code in the file ctd_models.py.
+They define specific parsing information and command syntax for the CTDs.
 
 ## Changelog
 
