@@ -5,13 +5,13 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>seabird_ctd &#8212; seabird_ctd 0.2.0 documentation</title>
+    <title>seabird_ctd &#8212; seabird_ctd 0.2.4.3 documentation</title>
     <link rel="stylesheet" href="../_static/classic.css" type="text/css" />
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '0.2.0',
+        VERSION:     '0.2.4.3',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true,
@@ -34,7 +34,7 @@
         <li class="right" >
           <a href="../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">seabird_ctd 0.2.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">seabird_ctd 0.2.4.3 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">Module code</a> &#187;</li> 
       </ul>
     </div>  
@@ -81,24 +81,24 @@
 
 <span class="kn">from</span> <span class="nn">seabird_ctd.ctd_models</span> <span class="k">import</span> <span class="o">*</span>
 
-<div class="viewcode-block" id="CTDConfigurationError"><a class="viewcode-back" href="../index.html#seabird_ctd.CTDConfigurationError">[docs]</a><span class="k">class</span> <span class="nc">CTDConfigurationError</span><span class="p">(</span><span class="ne">BaseException</span><span class="p">):</span>
+<div class="viewcode-block" id="CTDConfigurationError"><a class="viewcode-back" href="../api.html#seabird_ctd.CTDConfigurationError">[docs]</a><span class="k">class</span> <span class="nc">CTDConfigurationError</span><span class="p">(</span><span class="ne">BaseException</span><span class="p">):</span>
 	<span class="k">pass</span></div>
 
-<div class="viewcode-block" id="CTDOperationError"><a class="viewcode-back" href="../index.html#seabird_ctd.CTDOperationError">[docs]</a><span class="k">class</span> <span class="nc">CTDOperationError</span><span class="p">(</span><span class="ne">BaseException</span><span class="p">):</span>
+<div class="viewcode-block" id="CTDOperationError"><a class="viewcode-back" href="../api.html#seabird_ctd.CTDOperationError">[docs]</a><span class="k">class</span> <span class="nc">CTDOperationError</span><span class="p">(</span><span class="ne">BaseException</span><span class="p">):</span>
 	<span class="k">pass</span></div>
 
-<div class="viewcode-block" id="CTDConnectionError"><a class="viewcode-back" href="../index.html#seabird_ctd.CTDConnectionError">[docs]</a><span class="k">class</span> <span class="nc">CTDConnectionError</span><span class="p">(</span><span class="ne">BaseException</span><span class="p">):</span>
+<div class="viewcode-block" id="CTDConnectionError"><a class="viewcode-back" href="../api.html#seabird_ctd.CTDConnectionError">[docs]</a><span class="k">class</span> <span class="nc">CTDConnectionError</span><span class="p">(</span><span class="ne">BaseException</span><span class="p">):</span>
 	<span class="k">pass</span></div>
 
-<div class="viewcode-block" id="CTDUnsupportedError"><a class="viewcode-back" href="../index.html#seabird_ctd.CTDUnsupportedError">[docs]</a><span class="k">class</span> <span class="nc">CTDUnsupportedError</span><span class="p">(</span><span class="ne">BaseException</span><span class="p">):</span>
+<div class="viewcode-block" id="CTDUnsupportedError"><a class="viewcode-back" href="../api.html#seabird_ctd.CTDUnsupportedError">[docs]</a><span class="k">class</span> <span class="nc">CTDUnsupportedError</span><span class="p">(</span><span class="ne">BaseException</span><span class="p">):</span>
 	<span class="k">pass</span></div>
 
-<div class="viewcode-block" id="CTDUnicodeError"><a class="viewcode-back" href="../index.html#seabird_ctd.CTDUnicodeError">[docs]</a><span class="k">class</span> <span class="nc">CTDUnicodeError</span><span class="p">(</span><span class="ne">BaseException</span><span class="p">):</span>
+<div class="viewcode-block" id="CTDUnicodeError"><a class="viewcode-back" href="../api.html#seabird_ctd.CTDUnicodeError">[docs]</a><span class="k">class</span> <span class="nc">CTDUnicodeError</span><span class="p">(</span><span class="ne">BaseException</span><span class="p">):</span>
 	<span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">response</span><span class="p">):</span>
 		<span class="bp">self</span><span class="o">.</span><span class="n">response</span> <span class="o">=</span> <span class="n">response</span>  <span class="c1"># store the response so that we can print it later</span></div>
 
 
-<div class="viewcode-block" id="CTD"><a class="viewcode-back" href="../index.html#seabird_ctd.CTD">[docs]</a><span class="k">class</span> <span class="nc">CTD</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+<div class="viewcode-block" id="CTD"><a class="viewcode-back" href="../api.html#seabird_ctd.CTD">[docs]</a><span class="k">class</span> <span class="nc">CTD</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
 	<span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">		If COM_port is not provided, checks for an environment variable named SEABIRD_CTD_PORT. Otherwise raises</span>
 <span class="sd">		CTDConnectionError</span>
@@ -212,7 +212,7 @@
 
 		<span class="k">return</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_battery_voltage</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">_original_voltage</span><span class="p">)</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">_original_voltage</span>
 
-<div class="viewcode-block" id="CTD.determine_ctd_model"><a class="viewcode-back" href="../index.html#seabird_ctd.CTD.determine_ctd_model">[docs]</a>	<span class="k">def</span> <span class="nf">determine_ctd_model</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="CTD.determine_ctd_model"><a class="viewcode-back" href="../api.html#seabird_ctd.CTD.determine_ctd_model">[docs]</a>	<span class="k">def</span> <span class="nf">determine_ctd_model</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 		<span class="k">try</span><span class="p">:</span>
 			<span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Waking CTD&quot;</span><span class="p">)</span>
 			<span class="bp">self</span><span class="o">.</span><span class="n">wake</span><span class="p">()</span>
@@ -251,7 +251,7 @@
 		<span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">command_object</span><span class="p">:</span>
 			<span class="k">raise</span> <span class="n">CTDConnectionError</span><span class="p">(</span><span class="s2">&quot;Unable to wake CTD or determine its type. There could be a connection error or this is currently plugged into an unsupported model&quot;</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="CTD.send_command"><a class="viewcode-back" href="../index.html#seabird_ctd.CTD.send_command">[docs]</a>	<span class="k">def</span> <span class="nf">send_command</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">command</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">length_to_read</span><span class="o">=</span><span class="s2">&quot;ALL&quot;</span><span class="p">):</span>
+<div class="viewcode-block" id="CTD.send_command"><a class="viewcode-back" href="../api.html#seabird_ctd.CTD.send_command">[docs]</a>	<span class="k">def</span> <span class="nf">send_command</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">command</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">length_to_read</span><span class="o">=</span><span class="s2">&quot;ALL&quot;</span><span class="p">):</span>
 		<span class="k">if</span> <span class="n">command</span><span class="p">:</span>
 			<span class="n">sleep_time</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">command_object</span><span class="o">.</span><span class="n">operation_wait_times</span><span class="p">[</span><span class="n">command</span><span class="p">]</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">command_object</span> <span class="ow">and</span> <span class="n">command</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">command_object</span><span class="o">.</span><span class="n">operation_wait_times</span> <span class="k">else</span> <span class="mi">2</span>
 			<span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Sending &#39;</span><span class="si">{}</span><span class="s2">&#39;&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">command</span><span class="p">))</span>
@@ -308,7 +308,7 @@
 		<span class="k">except</span> <span class="ne">UnicodeDecodeError</span><span class="p">:</span>  <span class="c1"># raise it as our own so we can store the raw response to print out</span>
 			<span class="k">raise</span> <span class="n">CTDUnicodeError</span><span class="p">(</span><span class="n">response</span><span class="p">)</span>
 
-<div class="viewcode-block" id="CTD.set_datetime"><a class="viewcode-back" href="../index.html#seabird_ctd.CTD.set_datetime">[docs]</a>	<span class="k">def</span> <span class="nf">set_datetime</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">raise_error</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+<div class="viewcode-block" id="CTD.set_datetime"><a class="viewcode-back" href="../api.html#seabird_ctd.CTD.set_datetime">[docs]</a>	<span class="k">def</span> <span class="nf">set_datetime</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">raise_error</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
 		<span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">			Attempt to set the datetime. Logs a warning if that can&#39;t be done because the sampler is logging. If you want</span>
 <span class="sd">			it to raise an exception</span>
@@ -330,20 +330,20 @@
 			<span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Setting datetime: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">command</span><span class="p">))</span>
 			<span class="bp">self</span><span class="o">.</span><span class="n">send_command</span><span class="p">(</span><span class="n">command</span><span class="p">,</span> <span class="n">length_to_read</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="CTD.take_sample"><a class="viewcode-back" href="../index.html#seabird_ctd.CTD.take_sample">[docs]</a>	<span class="k">def</span> <span class="nf">take_sample</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="CTD.take_sample"><a class="viewcode-back" href="../api.html#seabird_ctd.CTD.take_sample">[docs]</a>	<span class="k">def</span> <span class="nf">take_sample</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 		<span class="bp">self</span><span class="o">.</span><span class="n">last_sample</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">send_command</span><span class="p">(</span><span class="s2">&quot;TS&quot;</span><span class="p">,</span> <span class="n">length_to_read</span><span class="o">=</span><span class="mi">1000</span><span class="p">)</span>
 		<span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">last_sample</span></div>
 
 	<span class="k">def</span> <span class="nf">_filter_samples_to_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,):</span>
 		<span class="k">pass</span>
 
-<div class="viewcode-block" id="CTD.sleep"><a class="viewcode-back" href="../index.html#seabird_ctd.CTD.sleep">[docs]</a>	<span class="k">def</span> <span class="nf">sleep</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="CTD.sleep"><a class="viewcode-back" href="../api.html#seabird_ctd.CTD.sleep">[docs]</a>	<span class="k">def</span> <span class="nf">sleep</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 		<span class="bp">self</span><span class="o">.</span><span class="n">send_command</span><span class="p">(</span><span class="s2">&quot;QS&quot;</span><span class="p">,</span> <span class="n">length_to_read</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="CTD.wake"><a class="viewcode-back" href="../index.html#seabird_ctd.CTD.wake">[docs]</a>	<span class="k">def</span> <span class="nf">wake</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="CTD.wake"><a class="viewcode-back" href="../api.html#seabird_ctd.CTD.wake">[docs]</a>	<span class="k">def</span> <span class="nf">wake</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 		<span class="bp">self</span><span class="o">.</span><span class="n">send_command</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\r\n\r\n</span><span class="s2">&quot;</span><span class="p">)</span>  <span class="c1"># Send a single character to wake the device, get the response so that we clear the buffer</span></div>
 
-<div class="viewcode-block" id="CTD.status"><a class="viewcode-back" href="../index.html#seabird_ctd.CTD.status">[docs]</a>	<span class="k">def</span> <span class="nf">status</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">status_parts</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<div class="viewcode-block" id="CTD.status"><a class="viewcode-back" href="../api.html#seabird_ctd.CTD.status">[docs]</a>	<span class="k">def</span> <span class="nf">status</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">status_parts</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
 		<span class="k">try</span><span class="p">:</span>
 			<span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">ctd</span><span class="o">.</span><span class="n">in_waiting</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>  <span class="c1"># any current waiting characters will make parsing weird.</span>
 				<span class="bp">self</span><span class="o">.</span><span class="n">_read_all</span><span class="p">()</span>  <span class="c1"># clear the input buffer, check for any data in the pipeline</span>
@@ -384,7 +384,7 @@
 
 		<span class="k">return</span> <span class="n">new_status</span></div>
 
-<div class="viewcode-block" id="CTD.setup_interrupt"><a class="viewcode-back" href="../index.html#seabird_ctd.CTD.setup_interrupt">[docs]</a>	<span class="k">def</span> <span class="nf">setup_interrupt</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">rabbitmq_server</span><span class="p">,</span> <span class="n">username</span><span class="p">,</span> <span class="n">password</span><span class="p">,</span> <span class="n">vhost</span><span class="p">,</span> <span class="n">queue</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<div class="viewcode-block" id="CTD.setup_interrupt"><a class="viewcode-back" href="../api.html#seabird_ctd.CTD.setup_interrupt">[docs]</a>	<span class="k">def</span> <span class="nf">setup_interrupt</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">rabbitmq_server</span><span class="p">,</span> <span class="n">username</span><span class="p">,</span> <span class="n">password</span><span class="p">,</span> <span class="n">vhost</span><span class="p">,</span> <span class="n">queue</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
 		<span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">			Used to set the monitoring functions to use the interrupt method, which allows messages to be passed to the CTD</span>
 <span class="sd">			from the user even while monitoring for data. By default, if this function is not called, then the monitoring code</span>
@@ -411,7 +411,7 @@
 		<span class="bp">self</span><span class="o">.</span><span class="n">interrupt_connection</span><span class="o">.</span><span class="n">vhost</span> <span class="o">=</span> <span class="n">vhost</span>
 		<span class="bp">self</span><span class="o">.</span><span class="n">interrupt_connection</span><span class="o">.</span><span class="n">QUEUE</span> <span class="o">=</span> <span class="n">queue</span></div>
 
-<div class="viewcode-block" id="CTD.check_interrupt"><a class="viewcode-back" href="../index.html#seabird_ctd.CTD.check_interrupt">[docs]</a>	<span class="k">def</span> <span class="nf">check_interrupt</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="CTD.check_interrupt"><a class="viewcode-back" href="../api.html#seabird_ctd.CTD.check_interrupt">[docs]</a>	<span class="k">def</span> <span class="nf">check_interrupt</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 		<span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">			Should return True if we&#39;re supposed to stop listening or False if we shouldn&#39;t</span>
 
@@ -426,7 +426,7 @@
 
 		<span class="k">return</span> <span class="kc">False</span>  <span class="c1"># default is no interrupt</span></div>
 
-<div class="viewcode-block" id="CTD.start_autosample"><a class="viewcode-back" href="../index.html#seabird_ctd.CTD.start_autosample">[docs]</a>	<span class="k">def</span> <span class="nf">start_autosample</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">interval</span><span class="o">=</span><span class="mi">60</span><span class="p">,</span> <span class="n">realtime</span><span class="o">=</span><span class="s2">&quot;Y&quot;</span><span class="p">,</span> <span class="n">handler</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">no_stop</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">max_iterations</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<div class="viewcode-block" id="CTD.start_autosample"><a class="viewcode-back" href="../api.html#seabird_ctd.CTD.start_autosample">[docs]</a>	<span class="k">def</span> <span class="nf">start_autosample</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">interval</span><span class="o">=</span><span class="mi">60</span><span class="p">,</span> <span class="n">realtime</span><span class="o">=</span><span class="s2">&quot;Y&quot;</span><span class="p">,</span> <span class="n">handler</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">no_stop</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">max_iterations</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
 		<span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">			This should set the sampling interval, then turn on autosampling, then just keep reading the line every interval.</span>
 <span class="sd">			Before reading the line, it should also check for new commands in a command queue, so it can see if it&#39;s</span>
@@ -480,7 +480,7 @@
 
 			<span class="bp">self</span><span class="o">.</span><span class="n">listen</span><span class="p">(</span><span class="n">interval</span><span class="p">,</span> <span class="n">max_iterations</span><span class="o">=</span><span class="n">max_iterations</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="CTD.listen"><a class="viewcode-back" href="../index.html#seabird_ctd.CTD.listen">[docs]</a>	<span class="k">def</span> <span class="nf">listen</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">interval</span><span class="o">=</span><span class="mi">60</span><span class="p">,</span> <span class="n">max_iterations</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<div class="viewcode-block" id="CTD.listen"><a class="viewcode-back" href="../api.html#seabird_ctd.CTD.listen">[docs]</a>	<span class="k">def</span> <span class="nf">listen</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">interval</span><span class="o">=</span><span class="mi">60</span><span class="p">,</span> <span class="n">max_iterations</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
 		<span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">			Continuously polls for new data on the line at interval. Used when autosampling with realtime transmission to</span>
 <span class="sd">			receive records.</span>
@@ -583,7 +583,7 @@
 
 				<span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="n">interval</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="CTD.read_records"><a class="viewcode-back" href="../index.html#seabird_ctd.CTD.read_records">[docs]</a>	<span class="k">def</span> <span class="nf">read_records</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="CTD.read_records"><a class="viewcode-back" href="../api.html#seabird_ctd.CTD.read_records">[docs]</a>	<span class="k">def</span> <span class="nf">read_records</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 
 		<span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Checking for CTD data&quot;</span><span class="p">)</span>
 
@@ -599,7 +599,7 @@
 
 		<span class="k">return</span> <span class="n">data</span></div>
 
-<div class="viewcode-block" id="CTD.check_data_for_records"><a class="viewcode-back" href="../index.html#seabird_ctd.CTD.check_data_for_records">[docs]</a>	<span class="k">def</span> <span class="nf">check_data_for_records</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+<div class="viewcode-block" id="CTD.check_data_for_records"><a class="viewcode-back" href="../api.html#seabird_ctd.CTD.check_data_for_records">[docs]</a>	<span class="k">def</span> <span class="nf">check_data_for_records</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
 		<span class="n">records</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">find_records</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
 
 		<span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">handler</span><span class="p">:</span>  <span class="c1"># if it&#39;s sampling and we&#39;ve received records, but not yet configured a handler, hold onto the records until a handler is configured</span>
@@ -610,7 +610,7 @@
 				<span class="bp">self</span><span class="o">.</span><span class="n">held_records</span> <span class="o">=</span> <span class="p">[]</span>
 			<span class="bp">self</span><span class="o">.</span><span class="n">handler</span><span class="p">(</span><span class="n">records</span><span class="p">)</span>  <span class="c1"># Call the provided handler function to do whatever the caller wants to do with the data</span></div>
 
-<div class="viewcode-block" id="CTD.find_records"><a class="viewcode-back" href="../index.html#seabird_ctd.CTD.find_records">[docs]</a>	<span class="k">def</span> <span class="nf">find_records</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+<div class="viewcode-block" id="CTD.find_records"><a class="viewcode-back" href="../api.html#seabird_ctd.CTD.find_records">[docs]</a>	<span class="k">def</span> <span class="nf">find_records</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
 		<span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">			Given the parsing regex defined in the command object for this CTD, runs it and returns a list of dicts</span>
 <span class="sd">			containing sampled values. The dict will always have the keys defined in the command object&#39;s &quot;keys&quot; attribute.</span>
@@ -644,7 +644,7 @@
 
 		<span class="k">return</span> <span class="n">records</span></div>
 
-<div class="viewcode-block" id="CTD.recover"><a class="viewcode-back" href="../index.html#seabird_ctd.CTD.recover">[docs]</a>	<span class="k">def</span> <span class="nf">recover</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="CTD.recover"><a class="viewcode-back" href="../api.html#seabird_ctd.CTD.recover">[docs]</a>	<span class="k">def</span> <span class="nf">recover</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 		<span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">			This is for using if the line is interrupted by something, but the script stays running. In our production,</span>
 <span class="sd">			if power goes out to an intermediate set of devices, the CTD can go down. This method closes the existing</span>
@@ -658,7 +658,7 @@
 		<span class="bp">self</span><span class="o">.</span><span class="n">wake</span><span class="p">()</span>
 		<span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>  <span class="c1"># give it a moment after trying to recover</span></div>
 
-<div class="viewcode-block" id="CTD.stop_autosample"><a class="viewcode-back" href="../index.html#seabird_ctd.CTD.stop_autosample">[docs]</a>	<span class="k">def</span> <span class="nf">stop_autosample</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="CTD.stop_autosample"><a class="viewcode-back" href="../api.html#seabird_ctd.CTD.stop_autosample">[docs]</a>	<span class="k">def</span> <span class="nf">stop_autosample</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 		<span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Stopping existing autosampling&quot;</span><span class="p">)</span>
 		<span class="bp">self</span><span class="o">.</span><span class="n">send_command</span><span class="p">(</span><span class="s2">&quot;STOP&quot;</span><span class="p">,</span> <span class="n">length_to_read</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
 		<span class="bp">self</span><span class="o">.</span><span class="n">status</span><span class="p">()</span>
@@ -666,7 +666,7 @@
 		<span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_sampling</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">False</span><span class="p">:</span>
 			<span class="k">raise</span> <span class="n">CTDOperationError</span><span class="p">(</span><span class="s2">&quot;Unable to stop autosampling. If you are starting autosampling, parameters may not be updated&quot;</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="CTD.catch_up"><a class="viewcode-back" href="../index.html#seabird_ctd.CTD.catch_up">[docs]</a>	<span class="k">def</span> <span class="nf">catch_up</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="CTD.catch_up"><a class="viewcode-back" href="../api.html#seabird_ctd.CTD.catch_up">[docs]</a>	<span class="k">def</span> <span class="nf">catch_up</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 		<span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">			Meant to pull in any records that are missing on startup of this script - if the autosampler runs in the</span>
 <span class="sd">			background, then while the script is offline, new data is being stored in flash on the device. This should</span>
@@ -685,7 +685,7 @@
 
 		<span class="c1"># we now have all the samples and can parse them so that we can insert them.</span>
 
-<div class="viewcode-block" id="CTD.close"><a class="viewcode-back" href="../index.html#seabird_ctd.CTD.close">[docs]</a>	<span class="k">def</span> <span class="nf">close</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="CTD.close"><a class="viewcode-back" href="../api.html#seabird_ctd.CTD.close">[docs]</a>	<span class="k">def</span> <span class="nf">close</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 		<span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">			Put the CTD to sleep and close the connection</span>
 
@@ -708,7 +708,7 @@
 		<span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;ctd&quot;</span><span class="p">)</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">ctd</span><span class="p">:</span>  <span class="c1"># if we&#39;ve already defined the ctd attribute and it&#39;s still valid (not manually closed, etc)</span>
 			<span class="bp">self</span><span class="o">.</span><span class="n">close</span><span class="p">()</span></div>
 
-<div class="viewcode-block" id="interrupt_checker"><a class="viewcode-back" href="../index.html#seabird_ctd.interrupt_checker">[docs]</a><span class="k">def</span> <span class="nf">interrupt_checker</span><span class="p">(</span><span class="n">server</span><span class="p">,</span> <span class="n">username</span><span class="p">,</span> <span class="n">password</span><span class="p">,</span> <span class="n">vhost</span><span class="p">,</span> <span class="n">queue</span><span class="p">,</span> <span class="n">interval</span><span class="p">):</span>
+<div class="viewcode-block" id="interrupt_checker"><a class="viewcode-back" href="../api.html#seabird_ctd.interrupt_checker">[docs]</a><span class="k">def</span> <span class="nf">interrupt_checker</span><span class="p">(</span><span class="n">server</span><span class="p">,</span> <span class="n">username</span><span class="p">,</span> <span class="n">password</span><span class="p">,</span> <span class="n">vhost</span><span class="p">,</span> <span class="n">queue</span><span class="p">,</span> <span class="n">interval</span><span class="p">):</span>
 	<span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">		When using the interrupt method, this code handles the scheduling of the actual checking by connecting</span>
 <span class="sd">		to RabbitMQ and sending READ commands every interval</span>
@@ -765,7 +765,7 @@
         <li class="right" >
           <a href="../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">seabird_ctd 0.2.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">seabird_ctd 0.2.4.3 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="index.html" >Module code</a> &#187;</li> 
       </ul>
     </div>

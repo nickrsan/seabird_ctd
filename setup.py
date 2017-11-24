@@ -23,18 +23,22 @@ setup(
     # Versions should comply with PEP440.  For a discussion on single-sourcing
     # the version across setup.py and the project code, see
     # https://packaging.python.org/en/latest/single_source_version.html
-    version="0.2.4.2",
+    version="0.2.4.3",
 
     description='Tools for communicating with, retrieving data from, and managing a fixed Seabird CTD deployment',
     long_description="""
     The Seabird CTD library communicates with, controls, and reads data directly off of a Seabird CTD. It has been designed for the legacy SBE 39 and the modern SBE 37+, but can be extended to support other models easily. Other CTD packages focus on working with the data, especially profiles, once it's downloaded, but this package is designed to allow for direct control and monitoring during a longterm fixed deployment. The authors use this code to feed the CTD data into a database via django in realtime and implement the monitoring as a management command.
     
-    In-development documentation can be found at https://seabird-ctd.readthedocs.io/en/latest/
+    In-development API documentation can be found at https://seabird-ctd.readthedocs.io/en/latest/
+    Installation documentation and examples of usage can be found at https://bitbucket.org/b195m/seabird_ctd/
+    Note that for installation, the package name is seabird-ctd (eg: `pip install seabird-ctd`), but when using, the package name is seabird_ctd.
     
-    Installation documentation can be found at https://bitbucket.org/b195m/seabird_ctd/ - note that for installation,
-    the package name is seabird-ctd (eg: `pip install seabird-ctd`), but when using, the package name is seabird_ctd.
+    This package was developed by [Nick Santos](https://nicksantos.com) for 
+    [Paul Cziko's](https://paulcziko.com) McMurdo Oceanographic Observatory
+    under contract with the University of Oregon and funded by the National
+    Science Foundation under grant B-195-M.
     
-    This code was developed by Nick Santos for The University of Oregon with funding from the National Science Foundation.
+    Contributions and extensions of the code to make it work with other models are invited and welcome.
     """,
 
     # The project's main homepage.

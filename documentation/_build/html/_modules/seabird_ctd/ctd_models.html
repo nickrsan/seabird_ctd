@@ -1,0 +1,323 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>seabird_ctd.ctd_models &#8212; seabird_ctd 0.2.4.3 documentation</title>
+    <link rel="stylesheet" href="../../_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '0.2.4.3',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+  </head>
+  <body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">seabird_ctd 0.2.4.3 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="../seabird_ctd.html" accesskey="U">seabird_ctd</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for seabird_ctd.ctd_models</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">datetime</span>
+<span class="kn">import</span> <span class="nn">re</span>
+<span class="kn">from</span> <span class="nn">datetime</span> <span class="k">import</span> <span class="n">timezone</span>
+
+<div class="viewcode-block" id="CTDCommandObject"><a class="viewcode-back" href="../../api.html#seabird_ctd.ctd_models.CTDCommandObject">[docs]</a><span class="k">class</span> <span class="nc">CTDCommandObject</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+	<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">		Just an empty class that can be subclassed so that any isinstance checks would work</span>
+<span class="sd">	&quot;&quot;&quot;</span>
+
+	<span class="n">operation_wait_times</span> <span class="o">=</span> <span class="p">{}</span>  <span class="c1"># keys are for commands - if there is a key for a command here, it waits that many seconds for that operation before trying to read</span>
+
+<div class="viewcode-block" id="CTDCommandObject.clean_status"><a class="viewcode-back" href="../../api.html#seabird_ctd.ctd_models.CTDCommandObject.clean_status">[docs]</a>	<span class="k">def</span> <span class="nf">clean_status</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">status</span><span class="p">):</span>
+		<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">			REMINDER: THIS REMOVES *ALL* empty lines, not just leading ones (eg, SBE19plus which has some in the middle)</span>
+<span class="sd">		:param status:</span>
+<span class="sd">		:return:</span>
+<span class="sd">		&quot;&quot;&quot;</span>
+		<span class="n">remove_lines</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;?cmd S&gt;&quot;</span><span class="p">,</span> <span class="s2">&quot;S&gt;&quot;</span><span class="p">,</span> <span class="s2">&quot;DS&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">]</span>
+		<span class="k">return</span> <span class="p">[</span><span class="n">line</span> <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">status</span> <span class="k">if</span> <span class="n">line</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">remove_lines</span><span class="p">]</span>  <span class="c1"># remove the bad items from the list that confuse the parsers</span></div>
+
+<div class="viewcode-block" id="CTDCommandObject.clean_response"><a class="viewcode-back" href="../../api.html#seabird_ctd.ctd_models.CTDCommandObject.clean_response">[docs]</a>	<span class="k">def</span> <span class="nf">clean_response</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">response</span><span class="p">):</span>
+		<span class="k">return</span> <span class="n">response</span></div>
+
+<div class="viewcode-block" id="CTDCommandObject.txrealtime"><a class="viewcode-back" href="../../api.html#seabird_ctd.ctd_models.CTDCommandObject.txrealtime">[docs]</a>	<span class="k">def</span> <span class="nf">txrealtime</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+		<span class="k">return</span> <span class="s2">&quot;TXREALTIME=</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>  <span class="c1"># a smart default for this command</span></div></div>
+
+
+<div class="viewcode-block" id="SBE37S"><a class="viewcode-back" href="../../api.html#seabird_ctd.ctd_models.SBE37S">[docs]</a><span class="k">class</span> <span class="nc">SBE37S</span><span class="p">(</span><span class="n">CTDCommandObject</span><span class="p">):</span>
+	<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">		Handles the SBE37S commands</span>
+<span class="sd">	&quot;&quot;&quot;</span>
+	<span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">main_ctd</span><span class="p">):</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">max_samples</span> <span class="o">=</span> <span class="mi">3655394</span>  <span class="c1"># needs verification. This is just a guess based on SBE39</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">keys</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;pressure&quot;</span><span class="p">,</span> <span class="s2">&quot;conductivity&quot;</span><span class="p">,</span> <span class="s2">&quot;temperature&quot;</span><span class="p">,</span> <span class="s2">&quot;salinity&quot;</span><span class="p">,</span> <span class="s2">&quot;datetime&quot;</span><span class="p">)</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">ctd</span> <span class="o">=</span> <span class="n">main_ctd</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">setup</span><span class="p">()</span>
+
+<div class="viewcode-block" id="SBE37S.setup"><a class="viewcode-back" href="../../api.html#seabird_ctd.ctd_models.SBE37S.setup">[docs]</a>	<span class="k">def</span> <span class="nf">setup</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">operation_wait_time</span> <span class="o">=</span> <span class="mf">0.5</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">supports_commands_while_logging</span> <span class="o">=</span> <span class="kc">True</span></div>
+
+<div class="viewcode-block" id="SBE37S.set_datetime"><a class="viewcode-back" href="../../api.html#seabird_ctd.ctd_models.SBE37S.set_datetime">[docs]</a>	<span class="k">def</span> <span class="nf">set_datetime</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+		<span class="n">dt</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">(</span><span class="n">timezone</span><span class="o">.</span><span class="n">utc</span><span class="p">)</span>
+		<span class="k">return</span> <span class="p">[</span><span class="s2">&quot;DATETIME=</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">dt</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s2">&quot;%m</span><span class="si">%d</span><span class="s2">%Y%H%M%S&quot;</span><span class="p">))]</span></div>
+
+<div class="viewcode-block" id="SBE37S.sample_interval"><a class="viewcode-back" href="../../api.html#seabird_ctd.ctd_models.SBE37S.sample_interval">[docs]</a>	<span class="k">def</span> <span class="nf">sample_interval</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">interval</span><span class="p">):</span>
+		<span class="k">return</span> <span class="s2">&quot;SAMPLEINTERVAL=</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">interval</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="SBE37S.retrieve_samples"><a class="viewcode-back" href="../../api.html#seabird_ctd.ctd_models.SBE37S.retrieve_samples">[docs]</a>	<span class="k">def</span> <span class="nf">retrieve_samples</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">start</span><span class="p">,</span> <span class="n">end</span><span class="p">):</span>
+		<span class="k">return</span> <span class="p">[</span>
+			<span class="s2">&quot;OUTPUTFORMAT=1&quot;</span><span class="p">,</span>
+			<span class="s2">&quot;GetSamples:</span><span class="si">{}</span><span class="s2">,</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">start</span><span class="p">,</span><span class="n">end</span><span class="p">)</span>
+		<span class="p">]</span></div>
+
+<div class="viewcode-block" id="SBE37S.parse_status"><a class="viewcode-back" href="../../api.html#seabird_ctd.ctd_models.SBE37S.parse_status">[docs]</a>	<span class="k">def</span> <span class="nf">parse_status</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">status_message</span><span class="p">):</span>
+		<span class="n">return_dict</span> <span class="o">=</span> <span class="p">{}</span>
+		<span class="n">return_dict</span><span class="p">[</span><span class="s2">&quot;full_model&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">status_message</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot; &quot;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>  <span class="c1"># verified</span>
+		<span class="n">return_dict</span><span class="p">[</span><span class="s2">&quot;serial_number&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">status_message</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot; &quot;</span><span class="p">)[</span><span class="mi">4</span><span class="p">]</span>  <span class="c1"># verified</span>
+
+		<span class="n">voltages</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="s2">&quot;vMain\s+=\s+(\d+\.\d+),\s+vLith\s+=\s+(\d+\.\d+)&quot;</span><span class="p">,</span> <span class="n">status_message</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
+		<span class="n">return_dict</span><span class="p">[</span><span class="s2">&quot;battery_voltage&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">voltages</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>  <span class="c1"># group zero is whole match, so start with group 1</span>
+		<span class="n">return_dict</span><span class="p">[</span><span class="s2">&quot;lithium_voltage&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">voltages</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+
+		<span class="n">return_dict</span><span class="p">[</span><span class="s2">&quot;sample_number&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">status_message</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;, &quot;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot; = &quot;</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot; &quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
+		<span class="n">return_dict</span><span class="p">[</span><span class="s2">&quot;is_sampling&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span> <span class="k">if</span> <span class="n">status_message</span><span class="p">[</span><span class="mi">4</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;logging&quot;</span> <span class="k">else</span> <span class="kc">False</span>
+		<span class="n">return_dict</span><span class="p">[</span><span class="s2">&quot;salinity_output&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span> <span class="k">if</span> <span class="s2">&quot;output salinity&quot;</span> <span class="ow">in</span> <span class="n">status_message</span> <span class="k">else</span> <span class="kc">False</span>
+		<span class="k">return</span> <span class="n">return_dict</span></div>
+
+<div class="viewcode-block" id="SBE37S.record_regex"><a class="viewcode-back" href="../../api.html#seabird_ctd.ctd_models.SBE37S.record_regex">[docs]</a>	<span class="k">def</span> <span class="nf">record_regex</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+		<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">			Handles generation of the regex for the data records. If salinity output is turned on, handles that correctly.</span>
+<span class="sd">			STILL TO DO - handle other optional values, such as sound velocity - what happens if sound velocity is on,</span>
+<span class="sd">			but salinity is off, or if both are on?</span>
+<span class="sd">		:return:</span>
+<span class="sd">		&quot;&quot;&quot;</span>
+		<span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">ctd</span><span class="o">.</span><span class="n">salinity_output</span><span class="p">:</span>
+			<span class="n">salinity_insert</span> <span class="o">=</span> <span class="s2">&quot;\s+(?P&lt;salinity&gt;\d+\.\d+),&quot;</span>
+		<span class="k">else</span><span class="p">:</span>
+			<span class="n">salinity_insert</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+
+		<span class="bp">self</span><span class="o">.</span><span class="n">regex</span> <span class="o">=</span> <span class="s2">&quot;(?P&lt;temperature&gt;-?\d+\.\d+),\s+(?P&lt;conductivity&gt;-?\d+\.\d+),\s+(?P&lt;pressure&gt;-?\d+\.\d+),&quot;</span><span class="o">+</span><span class="n">salinity_insert</span><span class="o">+</span><span class="s2">&quot;\s+(?P&lt;datetime&gt;\d+\s\w+\s\d</span><span class="si">{4}</span><span class="s2">,\s\d</span><span class="si">{2}</span><span class="s2">:\d</span><span class="si">{2}</span><span class="s2">:\d</span><span class="si">{2}</span><span class="s2">)&quot;</span>
+		<span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">regex</span></div></div>
+
+
+<div class="viewcode-block" id="SBE39"><a class="viewcode-back" href="../../api.html#seabird_ctd.ctd_models.SBE39">[docs]</a><span class="k">class</span> <span class="nc">SBE39</span><span class="p">(</span><span class="n">CTDCommandObject</span><span class="p">):</span>
+	<span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">main_ctd</span><span class="p">):</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">max_samples</span> <span class="o">=</span> <span class="mi">3655394</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">keys</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;temperature&quot;</span><span class="p">,</span> <span class="s2">&quot;pressure&quot;</span><span class="p">,</span> <span class="s2">&quot;datetime&quot;</span><span class="p">)</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">ctd</span> <span class="o">=</span> <span class="n">main_ctd</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">setup</span><span class="p">()</span>
+
+<div class="viewcode-block" id="SBE39.setup"><a class="viewcode-back" href="../../api.html#seabird_ctd.ctd_models.SBE39.setup">[docs]</a>	<span class="k">def</span> <span class="nf">setup</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">operation_wait_time</span> <span class="o">=</span> <span class="mf">0.5</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">supports_commands_while_logging</span> <span class="o">=</span> <span class="kc">True</span></div>
+
+	<span class="k">def</span> <span class="nf">_confirm_model</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">status_message</span><span class="p">):</span>
+		<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">			For models with multiple firmware versions, this takes the results of a DS and returns an activated instance of the correct class</span>
+<span class="sd">		:return: object</span>
+<span class="sd">		&quot;&quot;&quot;</span>
+		<span class="n">model</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="s2">&quot;(SBE39 .*?)\s+SERIAL NO.*&quot;</span><span class="p">,</span> <span class="n">status_message</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+		<span class="k">try</span><span class="p">:</span>
+			<span class="n">full_model</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+		<span class="k">except</span><span class="p">:</span>
+			<span class="bp">self</span><span class="o">.</span><span class="n">ctd</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">&quot;Couldn&#39;t match model in status_message: &#39;</span><span class="si">{}</span><span class="s2">&#39;&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">status_message</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span>
+			<span class="k">raise</span>
+
+		<span class="k">if</span> <span class="n">full_model</span> <span class="ow">in</span> <span class="n">supported_ctds</span><span class="p">:</span>  <span class="c1"># basically, check if there&#39;s a better match based on the full model output in the status message</span>
+			<span class="k">return</span> <span class="n">supported_ctds</span><span class="p">[</span><span class="n">full_model</span><span class="p">](</span><span class="bp">self</span><span class="o">.</span><span class="n">ctd</span><span class="p">)</span>
+		<span class="k">else</span><span class="p">:</span>  <span class="c1"># if there&#39;s not, keep using this one</span>
+			<span class="k">return</span> <span class="bp">self</span>
+
+<div class="viewcode-block" id="SBE39.set_datetime"><a class="viewcode-back" href="../../api.html#seabird_ctd.ctd_models.SBE39.set_datetime">[docs]</a>	<span class="k">def</span> <span class="nf">set_datetime</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+		<span class="n">dt</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">(</span><span class="n">timezone</span><span class="o">.</span><span class="n">utc</span><span class="p">)</span>
+		<span class="k">return</span> <span class="p">[</span><span class="s2">&quot;MMDDYY=</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">dt</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s2">&quot;%m</span><span class="si">%d</span><span class="s2">%y&quot;</span><span class="p">)),</span> <span class="s2">&quot;HHMMSS=</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">dt</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s2">&quot;%H%M%S&quot;</span><span class="p">))]</span></div>
+
+<div class="viewcode-block" id="SBE39.sample_interval"><a class="viewcode-back" href="../../api.html#seabird_ctd.ctd_models.SBE39.sample_interval">[docs]</a>	<span class="k">def</span> <span class="nf">sample_interval</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">interval</span><span class="p">):</span>
+		<span class="k">return</span> <span class="s2">&quot;INTERVAL=</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">interval</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="SBE39.retrieve_samples"><a class="viewcode-back" href="../../api.html#seabird_ctd.ctd_models.SBE39.retrieve_samples">[docs]</a>	<span class="k">def</span> <span class="nf">retrieve_samples</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">start</span><span class="p">,</span> <span class="n">end</span><span class="p">):</span>
+		<span class="k">return</span> <span class="p">[</span>
+			<span class="s2">&quot;DD</span><span class="si">{}</span><span class="s2">,</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">start</span><span class="p">,</span> <span class="n">end</span><span class="p">)</span>
+		<span class="p">]</span></div>
+
+<div class="viewcode-block" id="SBE39.record_regex"><a class="viewcode-back" href="../../api.html#seabird_ctd.ctd_models.SBE39.record_regex">[docs]</a>	<span class="k">def</span> <span class="nf">record_regex</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">regex</span> <span class="o">=</span> <span class="s2">&quot;(?P&lt;temperature&gt;-?\d+\.\d+),\s+(?P&lt;pressure&gt;-?\d+\.\d+),\s+(?P&lt;datetime&gt;\d+\s\w+\s\d</span><span class="si">{4}</span><span class="s2">,\s\d</span><span class="si">{2}</span><span class="s2">:\d</span><span class="si">{2}</span><span class="s2">:\d</span><span class="si">{2}</span><span class="s2">)&quot;</span>
+		<span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">regex</span></div>
+
+<div class="viewcode-block" id="SBE39.parse_status"><a class="viewcode-back" href="../../api.html#seabird_ctd.ctd_models.SBE39.parse_status">[docs]</a>	<span class="k">def</span> <span class="nf">parse_status</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">status_message</span><span class="p">):</span>
+		<span class="n">return_dict</span> <span class="o">=</span> <span class="p">{}</span>
+		<span class="n">return_dict</span><span class="p">[</span><span class="s2">&quot;full_model&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">status_message</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;   &quot;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+		<span class="n">return_dict</span><span class="p">[</span><span class="s2">&quot;serial_number&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">status_message</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;   &quot;</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span>
+		<span class="n">return_dict</span><span class="p">[</span><span class="s2">&quot;battery_voltage&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">status_message</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot; = &quot;</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span>
+		<span class="n">return_dict</span><span class="p">[</span><span class="s2">&quot;sample_number&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">status_message</span><span class="p">[</span><span class="mi">5</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;, &quot;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot; = &quot;</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span>
+		<span class="n">return_dict</span><span class="p">[</span><span class="s2">&quot;is_sampling&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span> <span class="k">if</span> <span class="n">status_message</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;logging data&quot;</span> <span class="k">else</span> <span class="kc">False</span>
+		<span class="k">return</span> <span class="n">return_dict</span></div></div>
+
+
+<div class="viewcode-block" id="SBE3915"><a class="viewcode-back" href="../../api.html#seabird_ctd.ctd_models.SBE3915">[docs]</a><span class="k">class</span> <span class="nc">SBE3915</span><span class="p">(</span><span class="n">SBE39</span><span class="p">):</span>
+	<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">		Older SBE39 - firmware 1.5 - similar, but different status parsing</span>
+<span class="sd">	&quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="SBE3915.setup"><a class="viewcode-back" href="../../api.html#seabird_ctd.ctd_models.SBE3915.setup">[docs]</a>	<span class="k">def</span> <span class="nf">setup</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">operation_wait_time</span> <span class="o">=</span> <span class="mi">2</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">max_samples</span> <span class="o">=</span> <span class="mi">230000</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">supports_commands_while_logging</span> <span class="o">=</span> <span class="kc">False</span></div>
+
+<div class="viewcode-block" id="SBE3915.parse_status"><a class="viewcode-back" href="../../api.html#seabird_ctd.ctd_models.SBE3915.parse_status">[docs]</a>	<span class="k">def</span> <span class="nf">parse_status</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">status_message</span><span class="p">):</span>
+		<span class="n">status_message</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">clean_status</span><span class="p">(</span><span class="n">status_message</span><span class="p">)</span>
+
+		<span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">status_message</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">or</span> <span class="n">status_message</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">!=</span> <span class="s2">&quot;DS&quot;</span><span class="p">:</span>  <span class="c1"># this model seems to get put to sleep after starting autosampling - this is a hackish workaround, but we want to check the status then, so try again</span>
+			<span class="k">return</span> <span class="kc">None</span>
+
+		<span class="n">return_dict</span> <span class="o">=</span> <span class="p">{}</span>
+		<span class="n">model</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="s2">&quot;(SBE39 [\d\.]+?)\s+SERIAL NO\.\s+(\d+)\s+.*&quot;</span><span class="p">,</span> <span class="n">status_message</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+		<span class="n">return_dict</span><span class="p">[</span><span class="s2">&quot;full_model&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>  <span class="c1"># group zero is whole match, so start with group 1</span>
+		<span class="n">return_dict</span><span class="p">[</span><span class="s2">&quot;serial_number&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+		<span class="n">return_dict</span><span class="p">[</span><span class="s2">&quot;sample_number&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">status_message</span><span class="p">[</span><span class="mi">4</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;, &quot;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot; = &quot;</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span>
+		<span class="n">return_dict</span><span class="p">[</span><span class="s2">&quot;is_sampling&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span> <span class="k">if</span> <span class="n">status_message</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;logging data&quot;</span> <span class="k">else</span> <span class="kc">False</span>
+		<span class="n">return_dict</span><span class="p">[</span><span class="s2">&quot;battery_voltage&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+
+		<span class="k">return</span> <span class="n">return_dict</span></div>
+
+<div class="viewcode-block" id="SBE3915.clean_response"><a class="viewcode-back" href="../../api.html#seabird_ctd.ctd_models.SBE3915.clean_response">[docs]</a>	<span class="k">def</span> <span class="nf">clean_response</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">response</span><span class="p">):</span>
+		<span class="k">return</span> <span class="n">response</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="sa">b</span><span class="s2">&quot;</span><span class="se">\xc5</span><span class="s2">&quot;</span><span class="p">,</span> <span class="sa">b</span><span class="s2">&quot;&quot;</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="SBE19plus"><a class="viewcode-back" href="../../api.html#seabird_ctd.ctd_models.SBE19plus">[docs]</a><span class="k">class</span> <span class="nc">SBE19plus</span><span class="p">(</span><span class="n">CTDCommandObject</span><span class="p">):</span>
+	<span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">main_ctd</span><span class="p">):</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">max_samples</span> <span class="o">=</span> <span class="mi">727000</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">keys</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;temperature&quot;</span><span class="p">,</span> <span class="s2">&quot;pressure&quot;</span><span class="p">,</span> <span class="s2">&quot;conductivity&quot;</span><span class="p">,</span> <span class="s2">&quot;salinity&quot;</span><span class="p">,</span> <span class="s2">&quot;datetime&quot;</span><span class="p">)</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">ctd</span> <span class="o">=</span> <span class="n">main_ctd</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">setup</span><span class="p">()</span>
+
+<div class="viewcode-block" id="SBE19plus.setup"><a class="viewcode-back" href="../../api.html#seabird_ctd.ctd_models.SBE19plus.setup">[docs]</a>	<span class="k">def</span> <span class="nf">setup</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">operation_wait_time</span> <span class="o">=</span> <span class="mi">2</span>
+		<span class="c1">#self.max_samples = 230000</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">supports_commands_while_logging</span> <span class="o">=</span> <span class="kc">False</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">operation_wait_times</span><span class="p">[</span><span class="s2">&quot;DS&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">8</span></div>
+
+<div class="viewcode-block" id="SBE19plus.set_datetime"><a class="viewcode-back" href="../../api.html#seabird_ctd.ctd_models.SBE19plus.set_datetime">[docs]</a>	<span class="k">def</span> <span class="nf">set_datetime</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+		<span class="n">dt</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">(</span><span class="n">timezone</span><span class="o">.</span><span class="n">utc</span><span class="p">)</span>
+		<span class="k">return</span> <span class="p">[</span><span class="s2">&quot;MMDDYY=</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">dt</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s2">&quot;%m</span><span class="si">%d</span><span class="s2">%y&quot;</span><span class="p">)),</span> <span class="s2">&quot;HHMMSS=</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">dt</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s2">&quot;%H%M%S&quot;</span><span class="p">))]</span></div>
+
+<div class="viewcode-block" id="SBE19plus.sample_interval"><a class="viewcode-back" href="../../api.html#seabird_ctd.ctd_models.SBE19plus.sample_interval">[docs]</a>	<span class="k">def</span> <span class="nf">sample_interval</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">interval</span><span class="p">):</span>
+		<span class="k">return</span> <span class="s2">&quot;SAMPLEINTERVAL=</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">interval</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="SBE19plus.txrealtime"><a class="viewcode-back" href="../../api.html#seabird_ctd.ctd_models.SBE19plus.txrealtime">[docs]</a>	<span class="k">def</span> <span class="nf">txrealtime</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+		<span class="k">return</span> <span class="s2">&quot;MOOREDTXREALTIME=</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>  <span class="c1"># a smart default for this command</span></div>
+
+<div class="viewcode-block" id="SBE19plus.parse_status"><a class="viewcode-back" href="../../api.html#seabird_ctd.ctd_models.SBE19plus.parse_status">[docs]</a>	<span class="k">def</span> <span class="nf">parse_status</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">status_message</span><span class="p">):</span>
+		<span class="n">status_message</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">clean_status</span><span class="p">(</span><span class="n">status_message</span><span class="p">)</span>
+		<span class="n">return_dict</span> <span class="o">=</span> <span class="p">{}</span>
+
+		<span class="n">model_parts</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="s2">&quot;^(.+?)\s+SERIAL\s+NO.\s+(\d+)\s+.*$&quot;</span><span class="p">,</span> <span class="n">status_message</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+		<span class="n">return_dict</span><span class="p">[</span><span class="s2">&quot;full_model&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">model_parts</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+		<span class="n">return_dict</span><span class="p">[</span><span class="s2">&quot;serial_number&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">model_parts</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+
+		<span class="n">voltages</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="s2">&quot;vbatt\s+=\s+(\d+\.\d+),\s+vlith\s+=\s+(\d+\.\d+)&quot;</span><span class="p">,</span> <span class="n">status_message</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+		<span class="n">return_dict</span><span class="p">[</span><span class="s2">&quot;battery_voltage&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">voltages</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>  <span class="c1"># group zero is whole match, so start with group 1</span>
+		<span class="n">return_dict</span><span class="p">[</span><span class="s2">&quot;lithium_voltage&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">voltages</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+
+		<span class="n">return_dict</span><span class="p">[</span><span class="s2">&quot;sample_number&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">status_message</span><span class="p">[</span><span class="mi">6</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;, &quot;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot; = &quot;</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot; &quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
+		<span class="n">return_dict</span><span class="p">[</span><span class="s2">&quot;is_sampling&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span> <span class="k">if</span> <span class="n">status_message</span><span class="p">[</span><span class="mi">4</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;status = logging&quot;</span> <span class="k">else</span> <span class="kc">False</span>
+		<span class="n">return_dict</span><span class="p">[</span><span class="s2">&quot;salinity_output&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span> <span class="k">if</span> <span class="n">status_message</span><span class="p">[</span><span class="mi">15</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot; &quot;</span><span class="p">)[</span><span class="mi">3</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;yes,&quot;</span> <span class="k">else</span> <span class="kc">False</span>
+		<span class="k">return</span> <span class="n">return_dict</span></div>
+
+<div class="viewcode-block" id="SBE19plus.record_regex"><a class="viewcode-back" href="../../api.html#seabird_ctd.ctd_models.SBE19plus.record_regex">[docs]</a>	<span class="k">def</span> <span class="nf">record_regex</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+		<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">			Handles generation of the regex for the data records. If salinity output is turned on, handles that correctly.</span>
+<span class="sd">			STILL TO DO - handle other optional values, such as sound velocity - what happens if sound velocity is on,</span>
+<span class="sd">			but salinity is off, or if both are on?</span>
+<span class="sd">		:return:</span>
+<span class="sd">		&quot;&quot;&quot;</span>
+		<span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">ctd</span><span class="o">.</span><span class="n">salinity_output</span><span class="p">:</span>
+			<span class="n">salinity_insert</span> <span class="o">=</span> <span class="s2">&quot;\s+(?P&lt;salinity&gt;\d+\.\d+),&quot;</span>
+		<span class="k">else</span><span class="p">:</span>
+			<span class="n">salinity_insert</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+
+		<span class="bp">self</span><span class="o">.</span><span class="n">regex</span> <span class="o">=</span> <span class="s2">&quot;(?P&lt;temperature&gt;-?\d+\.\d+),\s+(?P&lt;conductivity&gt;-?\d+\.\d+),\s+(?P&lt;pressure&gt;-?\d+\.\d+),&quot;</span><span class="o">+</span><span class="n">salinity_insert</span><span class="o">+</span><span class="s2">&quot;\s+.*?(?P&lt;datetime&gt;\d+\s\w+\s\d</span><span class="si">{4}</span><span class="s2">,\s\d</span><span class="si">{2}</span><span class="s2">:\d</span><span class="si">{2}</span><span class="s2">:\d</span><span class="si">{2}</span><span class="s2">)&quot;</span>
+		<span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">regex</span></div></div>
+
+
+<span class="n">supported_ctds</span> <span class="o">=</span> <span class="p">{</span>
+	<span class="s2">&quot;SBE37S&quot;</span><span class="p">:</span> <span class="n">SBE37S</span><span class="p">,</span>
+	<span class="s2">&quot;SBE 39&quot;</span><span class="p">:</span> <span class="n">SBE39</span><span class="p">,</span>
+	<span class="s2">&quot;SBE39 &quot;</span><span class="p">:</span> <span class="n">SBE3915</span><span class="p">,</span>
+	<span class="s2">&quot;SBE39 1.5&quot;</span><span class="p">:</span> <span class="n">SBE3915</span><span class="p">,</span>
+	<span class="s2">&quot;SBE391.5&quot;</span><span class="p">:</span> <span class="n">SBE3915</span><span class="p">,</span>
+	<span class="s2">&quot;SeacatPlus V 1.6&quot;</span><span class="p">:</span> <span class="n">SBE19plus</span><span class="p">,</span>
+	<span class="s2">&quot;SeacatPlusV1.6&quot;</span><span class="p">:</span> <span class="n">SBE19plus</span><span class="p">,</span>
+	<span class="s2">&quot;SeacatPlus&quot;</span><span class="p">:</span> <span class="n">SBE19plus</span><span class="p">,</span>
+<span class="p">}</span>  <span class="c1"># name the instrument will report, then class name. could also do this with 2-tuples.</span>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">seabird_ctd 0.2.4.3 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="../seabird_ctd.html" >seabird_ctd</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2017, Nick Santos.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.6.5.
+    </div>
+  </body>
+</html>

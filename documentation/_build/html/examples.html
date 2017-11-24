@@ -1,0 +1,243 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Usage and Examples &#8212; seabird_ctd 0.2.4.3 documentation</title>
+    <link rel="stylesheet" href="_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '0.2.4.3',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="API documentation" href="api.html" />
+    <link rel="prev" title="Welcome to seabird_ctd’s documentation!" href="index.html" /> 
+  </head>
+  <body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="api.html" title="API documentation"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="Welcome to seabird_ctd’s documentation!"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">seabird_ctd 0.2.4.3 documentation</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="usage-and-examples">
+<h1>Usage and Examples<a class="headerlink" href="#usage-and-examples" title="Permalink to this headline">¶</a></h1>
+<p>The following example shows some basic usage of the seabird_ctd code</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">seabird_ctd</span>
+
+<span class="k">def</span> <span class="nf">handle_records</span><span class="p">(</span><span class="n">records</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        This function receives the read data as a list of dicts, and you</span>
+<span class="sd">        can handle the data however you like in here. In this case, we</span>
+<span class="sd">        instantiate a new django model (not defined in this example)</span>
+<span class="sd">        and set its values to match the records received before saving.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">for</span> <span class="n">record</span> <span class="ow">in</span> <span class="n">records</span><span class="p">:</span>
+        <span class="n">new_record</span> <span class="o">=</span> <span class="n">CTD</span><span class="p">()</span>
+        <span class="n">new_record</span><span class="o">.</span><span class="n">temp</span> <span class="o">=</span> <span class="n">record</span><span class="p">[</span><span class="s2">&quot;temperature&quot;</span><span class="p">]</span>
+        <span class="n">new_record</span><span class="o">.</span><span class="n">conductivity</span> <span class="o">=</span> <span class="n">record</span><span class="p">[</span><span class="s2">&quot;conductivity&quot;</span><span class="p">]</span>
+        <span class="n">new_record</span><span class="o">.</span><span class="n">pressure</span> <span class="o">=</span> <span class="n">record</span><span class="p">[</span><span class="s2">&quot;pressure&quot;</span><span class="p">]</span>
+        <span class="n">new_record</span><span class="o">.</span><span class="n">datetime</span> <span class="o">=</span> <span class="n">record</span><span class="p">[</span><span class="s2">&quot;datetime&quot;</span><span class="p">]</span>
+        <span class="n">new_record</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
+
+<span class="n">ctd</span> <span class="o">=</span> <span class="n">seabird_ctd</span><span class="o">.</span><span class="n">CTD</span><span class="p">(</span><span class="n">port</span><span class="o">=</span><span class="s2">&quot;COM6&quot;</span><span class="p">,</span> <span class="n">baud</span><span class="o">=</span><span class="mi">9600</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>  <span class="c1"># connect to the device itself over pyserial</span>
+<span class="k">if</span> <span class="ow">not</span> <span class="n">ctd</span><span class="o">.</span><span class="n">is_sampling</span><span class="p">:</span>  <span class="c1"># if it&#39;s not sampling, set the datetime to match current device, otherwise, we can&#39;t</span>
+    <span class="n">ctd</span><span class="o">.</span><span class="n">set_datetime</span><span class="p">()</span>  <span class="c1"># this just demonstrates some of the attributes it parses from the status message</span>
+<span class="k">else</span><span class="p">:</span>
+    <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;CTD already logging. Listening in&quot;</span><span class="p">)</span>
+
+<span class="n">ctd</span><span class="o">.</span><span class="n">start_autosample</span><span class="p">(</span><span class="n">interval</span><span class="o">=</span><span class="mi">60</span><span class="p">,</span> <span class="n">realtime</span><span class="o">=</span><span class="s2">&quot;Y&quot;</span><span class="p">,</span> <span class="n">handler</span><span class="o">=</span><span class="n">handle_records</span><span class="p">,</span> <span class="n">no_stop</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>  <span class="c1"># start listening in to autosampling results. If it&#39;s already sampling, it can stop it, reset parameters, and start it again, or leave it alone, depending on the options you define here</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="compatibility">
+<h1>Compatibility<a class="headerlink" href="#compatibility" title="Permalink to this headline">¶</a></h1>
+<p>Seabird CTD library is developed for Python 3. Most code should be compatible
+with Python 2.7, but has not been tested. If you’d like to make it Python 2.7
+compatible, please submit a pull request.</p>
+</div>
+<div class="section" id="simple-setup">
+<h1>Simple Setup<a class="headerlink" href="#simple-setup" title="Permalink to this headline">¶</a></h1>
+<p>This library, with few dependencies, can send commands directly to the device
+and monitor and parse responses.</p>
+<p>seabird_ctd requires two external packages for simple setup:</p>
+<ul class="simple">
+<li>six (for Python 2/3 compatibility)</li>
+<li>pyserial (for communication with the CTD)</li>
+</ul>
+<p>After installing those packages and seabird_ctd, you are set up to use the package</p>
+<p>When instantiating the CTD object in your code, no arguments are required except the
+COM port that the CTD communicates on. If you wish to not specify it in each
+script, you can also set an environment variable SEABIRD_CTD_PORT, which will
+be checked. Other options are available, including baud rate and the timeout
+for reading data (in seconds).</p>
+<p>In simple mode, if you initialize autosampling, then the program goes into
+a loop that it won’t exit from waiting for CTD data. To exit, you will need
+to either break/interrupt the program (Ctrl+C) or kill the process.</p>
+</div>
+<div class="section" id="advanced-setup">
+<h1>Advanced Setup<a class="headerlink" href="#advanced-setup" title="Permalink to this headline">¶</a></h1>
+<p>Advanced setup allows you to send manual commands to the CTD while it is
+sampling. It uses a different architecture that listens for commands and
+sends those when they are received while still monitoring for data from
+samples.</p>
+<p>Advanced setup requires significant external setup and small changes to
+your code. To use this mode, you must install:</p>
+<ul class="simple">
+<li>Erlang (for RabbitMQ)</li>
+<li>RabbitMQ</li>
+<li>Pika python package</li>
+</ul>
+<p>You must then set up and configure Rabbit MQ with a virtual host and a user
+account that has config privileges in that virtual host.</p>
+<p>Then, in your code, prior to initiating autosampling, you call</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">ctd</span><span class="o">.</span><span class="n">setup_interrupt</span><span class="p">({</span><span class="n">server_ip_address</span><span class="p">},</span>
+                <span class="p">{</span><span class="n">rabbit_mq_username</span><span class="p">},</span>
+                <span class="p">{</span><span class="n">rabbit_mq_password</span><span class="p">},</span>
+                <span class="p">{</span><span class="n">vhost</span><span class="p">})</span>
+</pre></div>
+</div>
+<p>Then, you can send commands via rabbit_mq to the queue in the virtual host
+that is named by COM port. So, if your CTD runs on COM4, then send messages
+to the queue “COM4”. Example code, again, as a Django management command,
+follows:</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">Command</span><span class="p">(</span><span class="n">BaseCommand</span><span class="p">):</span>
+    <span class="n">help</span> <span class="o">=</span> <span class="s1">&#39;Sends commands to the CTD while autosampling&#39;</span>
+
+    <span class="k">def</span> <span class="nf">add_arguments</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parser</span><span class="p">):</span>
+        <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--server&#39;</span><span class="p">,</span> <span class="n">nargs</span><span class="o">=</span><span class="s1">&#39;+&#39;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">str</span><span class="p">,</span> <span class="n">dest</span><span class="o">=</span><span class="s2">&quot;server&quot;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="bp">False</span><span class="p">,)</span>
+        <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--queue&#39;</span><span class="p">,</span> <span class="n">nargs</span><span class="o">=</span><span class="s1">&#39;+&#39;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">str</span><span class="p">,</span> <span class="n">dest</span><span class="o">=</span><span class="s2">&quot;queue&quot;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="bp">False</span><span class="p">,)</span>
+        <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--command&#39;</span><span class="p">,</span> <span class="n">nargs</span><span class="o">=</span><span class="s1">&#39;+&#39;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">str</span><span class="p">,</span> <span class="n">dest</span><span class="o">=</span><span class="s2">&quot;command&quot;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="bp">True</span><span class="p">,)</span>
+
+    <span class="k">def</span> <span class="nf">handle</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">options</span><span class="p">):</span>
+        <span class="n">queue</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="k">if</span> <span class="n">options</span><span class="p">[</span><span class="s1">&#39;queue&#39;</span><span class="p">]:</span>
+            <span class="n">queue</span> <span class="o">=</span> <span class="n">options</span><span class="p">[</span><span class="s1">&#39;queue&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">queue</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s1">&#39;SEABIRD_CTD_PORT&#39;</span><span class="p">]</span>
+
+        <span class="n">server</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="k">if</span> <span class="n">options</span><span class="p">[</span><span class="s1">&#39;server&#39;</span><span class="p">]:</span>
+            <span class="n">server</span> <span class="o">=</span> <span class="n">options</span><span class="p">[</span><span class="s1">&#39;server&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">server</span> <span class="o">=</span> <span class="s2">&quot;192.168.1.253&quot;</span>  <span class="c1"># set a default RabbitMQ server if not specified</span>
+
+        <span class="n">command</span> <span class="o">=</span> <span class="n">options</span><span class="p">[</span><span class="s1">&#39;command&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>  <span class="c1"># get the actual command to send</span>
+
+        <span class="c1"># connect to RabbitMQ</span>
+        <span class="n">connection</span> <span class="o">=</span> <span class="n">pika</span><span class="o">.</span><span class="n">BlockingConnection</span><span class="p">(</span><span class="n">pika</span><span class="o">.</span><span class="n">ConnectionParameters</span><span class="p">(</span><span class="n">host</span><span class="o">=</span><span class="n">server</span><span class="p">,</span> <span class="n">virtual_host</span><span class="o">=</span><span class="s2">&quot;moo&quot;</span><span class="p">,</span> <span class="n">credentials</span><span class="o">=</span><span class="n">PlainCredentials</span><span class="p">(</span><span class="n">local_settings</span><span class="o">.</span><span class="n">RABBITMQ_USERNAME</span><span class="p">,</span> <span class="n">local_settings</span><span class="o">.</span><span class="n">RABBITMQ_PASSWORD</span><span class="p">)))</span>
+        <span class="n">channel</span> <span class="o">=</span> <span class="n">connection</span><span class="o">.</span><span class="n">channel</span><span class="p">()</span>
+
+        <span class="n">channel</span><span class="o">.</span><span class="n">queue_declare</span><span class="p">(</span><span class="n">queue</span><span class="o">=</span><span class="n">queue</span><span class="p">)</span>
+
+        <span class="c1"># send the command message</span>
+        <span class="n">channel</span><span class="o">.</span><span class="n">basic_publish</span><span class="p">(</span><span class="n">exchange</span><span class="o">=</span><span class="s1">&#39;seabird&#39;</span><span class="p">,</span>
+                              <span class="n">routing_key</span><span class="o">=</span><span class="s1">&#39;seabird&#39;</span><span class="p">,</span>
+                              <span class="n">body</span><span class="o">=</span><span class="n">command</span><span class="p">)</span>
+        <span class="k">print</span><span class="p">(</span><span class="s2">&quot; [x] Sent {}&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">command</span><span class="p">))</span>
+        <span class="n">connection</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>You can send any command that the CTD supports executing while autosampling.
+See the manual for your CTD for more information on that. You can also send
+three special commands. READ_DATA initiates an immediate read of the data
+and sends it to the configured handler. STOP_MONITORING leaves the CTD
+recording data, but stops the Python code from checking for data.
+DISCONNECT is closely related to stop monitoring, but also sends a sleep
+command to the device and closes the serial connection.</p>
+</div>
+<div class="section" id="extending-the-code-to-a-new-ctd">
+<h1>Extending the code to a new CTD<a class="headerlink" href="#extending-the-code-to-a-new-ctd" title="Permalink to this headline">¶</a></h1>
+<p>CTDs have slightly different command styles, behaviors, and syntaxes and
+the authors of this package don’t have access to all of the CTDs Seabird
+produces. While the package has been tested with a handful of CTDs and
+firmware versions (SeacatPlus (SBE19plus), SBE39 firmware 1.5, SBE39 firmware 6,
+and SBE37), other models do not have support yet. This code is meant to provide
+a structure where it can be extended to support other, newer models, quickly (15 minutes to a few hours).
+Until further documentation is written, the best way to see how this is handled is to take a look at
+the objects for each CTD in the code in the file ctd_models.py.
+They define specific parsing information and command syntax for the CTDs.</p>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="index.html"
+                        title="previous chapter">Welcome to seabird_ctd’s documentation!</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="api.html"
+                        title="next chapter">API documentation</a></p>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="api.html" title="API documentation"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="Welcome to seabird_ctd’s documentation!"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">seabird_ctd 0.2.4.3 documentation</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2017, Nick Santos.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.6.5.
+    </div>
+  </body>
+</html>

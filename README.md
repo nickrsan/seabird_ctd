@@ -8,7 +8,10 @@ longterm fixed deployment. The authors use this code to feed the CTD data
 into a database via django in realtime and implement the monitoring as a
 management command.
 
-## Usage and Documentation
+## Installation, Usage, and Documentation
+To install, you can use a simple `pip install seabird-ctd` or clone this
+repository. You can find the package on PyPI at https://pypi.python.org/seabird-ctd
+
 In addition to the examples below, more complete documentation of the API
 can be found at https://seabird_ctd.readthedocs.io.
 
@@ -155,6 +158,12 @@ a structure where it can be extended to support other, newer models, quickly (15
 Until further documentation is written, the best way to see how this is handled is to take a look at
 the objects for each CTD in the code in the file ctd_models.py.
 They define specific parsing information and command syntax for the CTDs.
+
+## Acknowledgements
+This package was developed by [Nick Santos](https://nicksantos.com) for
+[Paul Cziko's](https://paulcziko.com) McMurdo Oceanographic Observatory
+under contract with the University of Oregon and funded by the National
+Science Foundation under grant B-195-M.
 
 ## Changelog
 
