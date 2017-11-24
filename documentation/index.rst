@@ -16,6 +16,10 @@ Welcome to seabird_ctd's documentation!
    :members:
    :undoc-members:
 
+.. automodule:: ctd_models
+   :members:
+   :undoc-members:
+
 Indices and tables
 ==================
 
