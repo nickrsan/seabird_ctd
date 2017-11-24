@@ -150,14 +150,17 @@ and command syntax for the CTDs.
 
 ## Changelog
 
+### 0.2.4.2
+* Fix: seabird_ctd would, in certain circumstances, fail to retrieve records from a model that doesn't support commands while logging if that device was logging when it connected
+
 ### 0.2.4.1
-* Added support for SBE19Plus - Seacat
-* Changed how model is determined to be more robust
-* Added "operation_wait_times" dict property to command objects to specify wait times for specific commands to complete
+* New Model: Added support for SBE19Plus - Seacat
+* Enhancement: Changed how model is determined to be more robust
+* API: Added "operation_wait_times" dict property to command objects to specify wait times for specific commands to complete
 
 ### 0.2.4.0
-* Added unit test for autologging
-* Added support for SBE39 firmware version 1.5, which has slightly different behavior from later versions
-* Added `send_raw` argument to support dumping the entire raw response from the CTD to a file
-* Began module for simulating outputs of unavailable models for future testing
-* Added some handlers to command objects to allow them to specify certain behaviors and parsing
+* New Model: Added support for SBE39 firmware version 1.5, which has slightly different behavior from later versions
+* API: Added `send_raw` argument to support dumping the entire raw response from the CTD to a file
+* API: Added some handlers to command objects to allow them to specify certain behaviors and parsing
+* Tests: Added unit test for autologging
+* Tests: Began module for simulating outputs of unavailable models for future testing
