@@ -93,6 +93,7 @@ class CTD(object):
 		self.last_sample = None
 		self.is_sampling = None  # starts at None, will be set when DS is run.
 		self.sample_number = None  # will be set by DS command
+		self.last_command = None  # keep track of what the last command we sent was
 		self.com_port = COM_port
 		self.send_raw = send_raw
 
@@ -209,6 +210,7 @@ class CTD(object):
 
 	def send_command(self, command=None, length_to_read="ALL"):
 		if command:
+			self.last_command = command
 			sleep_time = self.command_object.operation_wait_times[command] if self.command_object and command in self.command_object.operation_wait_times else 2
 			self.log.debug("Sending '{}'".format(command))
 			self.ctd.write(six.b('{}\r\n'.format(command)))  # doesn't seem to work unless we pass it a windows line ending. Sends command, but no results
@@ -294,6 +296,13 @@ class CTD(object):
 		pass
 
 	def sleep(self):
+		"""
+			Puts the device into Quiescent (sleep) mode. Most devices do this automatically after a few minutes
+		:return:
+		"""
+		if self.last_command == "QS":  # we don't want to send a command if it's *already* asleep, that'll just wake it.
+			return
+
 		self.send_command("QS", length_to_read=None)
 
 	def wake(self):

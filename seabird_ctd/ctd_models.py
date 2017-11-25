@@ -98,7 +98,7 @@ class SBE39(CTDCommandObject):
 			For models with multiple firmware versions, this takes the results of a DS and returns an activated instance of the correct class
 		:return: object
 		"""
-		model = re.match("(SBE39 .*?)\s+SERIAL NO.*", status_message[1])
+		model = re.match("(SBE\s?39 .*?)\s+SERIAL NO.*", status_message[1])
 		try:
 			full_model = model.group(1)
 		except:
