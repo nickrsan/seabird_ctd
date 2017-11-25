@@ -225,7 +225,7 @@ class SBE19plus(CTDCommandObject):
 supported_ctds = {
 	"SBE37S": SBE37S,
 	"SBE 39": SBE39,
-	"SBE39 ": SBE3915,
+	"SBE39": SBE39,  # should be OK to assign to main SBE 39 because it will try to detect if there's a more specific one to use
 	"SBE39 1.5": SBE3915,
 	"SBE391.5": SBE3915,
 	"SeacatPlus V 1.6": SBE19plus,

@@ -187,11 +187,14 @@ class CTD(object):
 
 				for i, value in enumerate(ds_parts):  # basically, keep trying to combine the parts of the DS first line untiil we either get a model number that we have, or we run out of lines
 					self.model = "".join(ds_parts[:i])
+					self.log.debug("Trying model as {}".format(self.model))
 					if self.model in supported_ctds:
 						self.log.debug("Best guess for model is {}".format(self.model))
 						break
 				else:
-					raise CTDUnsupportedError("Model '{}' is not supported. If this doesn't match the model you have, then the model information did not correctly parse. You may try again.".format(self.model))
+					raise CTDUnsupportedError(
+						"Model is not supported or the model information did not correctly parse. Supported models are {}. You may try again.".format(
+							supported_ctds))
 
 				self.command_object = supported_ctds[self.model](main_ctd=self)
 
