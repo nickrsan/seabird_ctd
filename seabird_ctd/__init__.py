@@ -432,7 +432,7 @@ class CTD(object):
 				self.send_command("\r\n", length_to_read=None)  # send a newline so that we get a new prompt again
 				self.status()  # make sure the status data is up to date. Doing it this way rather than setting manually so that if it failed for some reason, the object would still be correct
 								# if is_sampling doesn't get updated here, data reading won't work correctly, so this is important
-			else:
+			else:  # we don't send a sleep command here because devices that don't support commands while logging generally don't want anything sent *after* being put into logging mode
 				self.is_sampling = True  # since we can't very easily check that it's sampling for this device, assume it's true
 		else:
 			self.sleep()  # if it's already sampling, be on the safe side and put the device into QS mode now because devices that don't support commands while logging will need this after our startup sequence

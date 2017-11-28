@@ -218,7 +218,7 @@ class SBE19plus(CTDCommandObject):
 		else:
 			salinity_insert = ""
 
-		self.regex = "(?P<temperature>-?\d+\.\d+),\s+(?P<conductivity>-?\d+\.\d+),\s+(?P<pressure>-?\d+\.\d+),"+salinity_insert+"\s+.*?(?P<datetime>\d+\s\w+\s\d{4},\s\d{2}:\d{2}:\d{2})"
+		self.regex = "(?P<temperature>-?\d+\.\d+),\s+(?P<conductivity>-?\d+\.\d+),\s+(?P<pressure>-?\d+\.\d+),.*?"+salinity_insert+"\s+(?P<datetime>\d+\s\w+\s\d{4},\s\d{2}:\d{2}:\d{2})"
 		return self.regex
 
 
