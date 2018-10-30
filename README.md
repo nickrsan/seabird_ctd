@@ -167,6 +167,9 @@ Science Foundation under grant B-195-M.
 
 ## Changelog
 
+### 0.2.4.6
+* Adding new string for matching SBE37SM-RS232
+
 ### 0.2.4.4
 * Fix: SBE39 main now correctly identifies again
 * Enhancement: Code will now not send sleep command when device was already put to sleep by code, causing device to wake. Especially useful when code finishes.
