@@ -85,11 +85,14 @@ class SBE37S(CTDCommandObject):
 
 class SBE37SM(SBE37S):
 	def parse_status(self, status_message):
-		if six.PY2:
+		if six.PY3:
 			return_dict = super().parse_status(status_message)  # call parent status method - then override one item
 		else:
 			return_dict = super(SBE37S, self).parse_status(status_message)
+
 		return_dict["serial_number"] = status_message[1].split(" ")[5]  # verified
+
+		return return_dict
 
 class SBE39(CTDCommandObject):
 	def __init__(self, main_ctd):
