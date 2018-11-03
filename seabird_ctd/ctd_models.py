@@ -2,6 +2,8 @@ import datetime
 import re
 from datetime import timezone
 
+import six
+
 class CTDCommandObject(object):
 	"""
 		Just an empty class that can be subclassed so that any isinstance checks would work
@@ -81,6 +83,13 @@ class SBE37S(CTDCommandObject):
 		self.regex = "(?P<temperature>-?\d+\.\d+),\s+(?P<conductivity>-?\d+\.\d+),\s+(?P<pressure>-?\d+\.\d+),"+salinity_insert+"\s+(?P<datetime>\d+\s\w+\s\d{4},\s\d{2}:\d{2}:\d{2})"
 		return self.regex
 
+class SBE37SM(SBE37S):
+	def parse_status(self, status_message):
+		if six.PY2:
+			return_dict = super().parse_status(status_message)  # call parent status method - then override one item
+		else:
+			return_dict = super(SBE37S, self).parse_status(status_message)
+		return_dict["serial_number"] = status_message[1].split(" ")[5]  # verified
 
 class SBE39(CTDCommandObject):
 	def __init__(self, main_ctd):
@@ -224,7 +233,7 @@ class SBE19plus(CTDCommandObject):
 
 supported_ctds = {
 	"SBE37S": SBE37S,
-	"SBE37SM-RS232": SBE37S,
+	"SBE37SM-RS232": SBE37SM,
 	"SBE 39": SBE39,
 	"SBE39": SBE39,  # should be OK to assign to main SBE 39 because it will try to detect if there's a more specific one to use
 	"SBE39 1.5": SBE3915,
