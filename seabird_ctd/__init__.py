@@ -54,30 +54,31 @@ class CTDUnicodeError(BaseException):
 import timeit
 
 class TimeoutTimer(object):
-    """Use to set timing for sample intervalse to prevent excessively long
-    blocking calls with time.sleep()"""
-    
-    def __init__(self, duration = 0):
-        """Initialize the duration field. Duration is in seconds, floating point"""
-        self.__timer = timeit.default_timer
-        self.reset_timeout(duration)
-        return
-    
-    
-    def check_timeout(self):
-        """Return the number of of seconds until timeout.
-        If the duration has not been elapsed, return a positive number, 
-        otherwise the return value is negative."""
-        return self.__timeout - self.__timer()
-    
-    
-    def reset_timeout(self, duration):
-        """Reset the timer to some time further into the future."""
-        self.__startTime = self.__timer() # Time since start of program.
-        self.__timeout = self.__startTime + duration
-        self.__duration = duration
-        return
-    
+	"""Use to set timing for sample intervalse to prevent excessively long
+	blocking calls with time.sleep()"""
+	
+	def __init__(self, duration = 0):
+		"""Initialize the duration field. Duration is in seconds, floating point"""
+		self.__timer = timeit.default_timer
+		self.reset_timeout(duration)
+		return
+	
+	
+	def check_timeout(self):
+		"""Return the number of of seconds until timeout.
+		If the duration has not been elapsed, return a positive number,
+		otherwise the return value is negative."""
+		return self.__timeout - self.__timer()
+	
+	
+	def reset_timeout(self, duration):
+		"""Reset the timer to some time further into the future."""
+		self.__startTime = self.__timer() # Time since start of program.
+		self.__timeout = self.__startTime + duration
+		self.__duration = duration
+		return
+	
+
 
 class CTD(object):
 	"""
