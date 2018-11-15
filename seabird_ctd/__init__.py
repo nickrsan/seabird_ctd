@@ -51,6 +51,34 @@ class CTDUnicodeError(BaseException):
 		self.response = response  # store the response so that we can print it later
 
 
+import timeit
+
+class TimeoutTimer(object):
+    """Use to set timing for sample intervalse to prevent excessively long
+    blocking calls with time.sleep()"""
+    
+    def __init__(self, duration = 0):
+        """Initialize the duration field. Duration is in seconds, floating point"""
+        self.__timer = timeit.default_timer
+        self.resetTimeout(duration)
+        return
+    
+    
+    def checkTimeout(self):
+        """Return the number of of seconds until timeout.
+        If the duration has not been elapsed, return a positive number, 
+        otherwise the return value is negative."""
+        return self.__timeout - self.__timer()
+    
+    
+    def resetTimeout(self, duration):
+        """Reset the timer to some time further into the future."""
+        self.__startTime = self.__timer() # Time since start of program.
+        self.__timeout = self.__startTime + duration
+        self.__duration = duration
+        return
+    
+
 class CTD(object):
 	"""
 		If COM_port is not provided, checks for an environment variable named SEABIRD_CTD_PORT. Otherwise raises
@@ -97,7 +125,7 @@ class CTD(object):
 		self.com_port = COM_port
 		self.send_raw = send_raw
 
-		self.ctd = serial.Serial(COM_port, baud, timeout=timeout)
+		self.ctd = serial.Serial(COM_port, baud, timeout=timeout, write_timeout=0)
 		self.baud = baud
 		self.timeout = timeout
 		self.read_safety_delay = wait_numerator/self.baud
@@ -237,12 +265,24 @@ class CTD(object):
 			if self.debug:
 				self.log.debug("raw response: {}".format(response))
 
+			has_records = False
+			
 			if self.is_sampling:  # any time we read data, if we're sampling, we should check it for records
-				self.check_data_for_records(response)
+				has_records = self.check_data_for_records(response)
 
-			if "timeout" in response or self.model in response:  # if we got a timeout the first time, then we should be reconnected. Rerun this function and return the results
-				# we can safely check for the model because by the time it's all a list, no single line in the list is *only* the model unless we received a timeout
+			if (command == 'DS' and has_records) or "timeout" in response or self.model in response:
+				# If has_records is true, then we received a data sample in 
+				# between sending a command and receiving the response. In which
+				# case, we should send the command again to get a proper response.
+				
+				# If we got a timeout the first time, then we should be 
+				# reconnected. Rerun this function and return the results
+				
+				# We can safely check for the model because by the time it's 
+				# all a list, no single line in the list is *only* the model 
+				# unless we received a timeout
 				self.log.debug("Received unexpected response. Resending command (if any - input was {}). Response was {}".format(command, response))
+				
 				return self.send_command(command, length_to_read)
 			else:
 				return response
@@ -533,38 +573,65 @@ class CTD(object):
 
 			self.interrupt_connection.run()  # starts listening for commands
 
-		else:  # if no interrupt loop
+		else: 
+			# If no interrupt loop:
+			sample_interval_timer = TimeoutTimer(interval)
 			num_iterations = 0
 			while self.check_interrupt() is False:  # this may not be necessary - I think this is handled elsewhere
 				try:
 					self.read_records()
 				except CTDUnicodeError as e:
 					self.log.warning(b"Unable to decode response to unicode. Often, but not always, this means some sort of line interruption occurred. Here is the raw data received: '" + e.response + b"'. Trying to reconnect to recover the connection.")
+					
 					self.recover()  # UnicodeDecodeError most likely means a line interruption caused invalid data. Try to recover the connection
 
 				num_iterations += 1
 				if max_iterations and num_iterations > max_iterations:  # if this is only supposed to run a few times
 					break
-
-				time.sleep(interval)
-
+				
+				while sample_interval_timer.checkTimeout() > 0.0:
+					# Sleep for only half a second, that way we wont drift by
+					# some number of seconds when we run the DS command every
+					# hour. It may also make shutting down the service more responsive.
+					time.sleep(0.5)
+				
+				sample_interval_timer.resetTimeout(interval)
+			
+		return
+	
+	
 	def read_records(self):
-
+		
 		self.log.debug("Checking for CTD data")
-
+		
 		data = self._read_all()  # this will automatically check for data
-
+		
 		if (datetime.datetime.now(timezone.utc) - self.last_status).total_seconds() > 3600 and \
-				((self.is_sampling is True and self.command_object.supports_commands_while_logging) or self.is_sampling is False):  # if it's been more than an hour since we checked the status, refresh it so we get new battery stats - don't do it if we're sampling and the device doesn't do well with commands while sampling
+				((self.is_sampling is True and self.command_object.supports_commands_while_logging) or self.is_sampling is False):
+			
+			# if it's been more than an hour since we checked the status, 
+			# refresh it so we get new battery stats - don't do it if we're 
+			# sampling and the device doesn't do well with commands while sampling
+			
 			self.wake()
 			try:
-				self.status()  # this can be run while the device is logging
+				self.status()  # This can be run while the device is logging.
+				# We also want to send a QS here to put the device back to sleep.
+				self.sleep()
 			except IndexError:
 				self.log.warning("Unable to update status information - this is likely fine, but the logger state may not be current.")
-
+			
 		return data
-
+	
+	
 	def check_data_for_records(self, data):
+		"""Check the received data for temperature pressure and salinity data.
+		If this data is present, we have a new record.
+		
+		@param data: string, data array to examine for CTD records.
+		
+		@return: Boolean, True if the record count is greater than 0.
+		"""
 		records = self.find_records(data)
 
 		if not self.handler:  # if it's sampling and we've received records, but not yet configured a handler, hold onto the records until a handler is configured
@@ -573,7 +640,10 @@ class CTD(object):
 			if len(self.held_records) > 0:
 				self.handler(self.held_records)  # handle the held records first, then zero out the list
 				self.held_records = []
+			
+			# Should we avoid calling this unless len(records) > 0 ?
 			self.handler(records)  # Call the provided handler function to do whatever the caller wants to do with the data
+		return len(records) > 0
 
 	def find_records(self, data):
 		"""
@@ -619,7 +689,7 @@ class CTD(object):
 		"""
 
 		self.ctd.close()
-		self.ctd = serial.Serial(self.com_port, self.baud, timeout=self.timeout)
+		self.ctd = serial.Serial(self.com_port, self.baud, timeout=self.timeout, write_timeout=0)
 		self.wake()
 		time.sleep(2)  # give it a moment after trying to recover
 
