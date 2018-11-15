@@ -60,18 +60,18 @@ class TimeoutTimer(object):
     def __init__(self, duration = 0):
         """Initialize the duration field. Duration is in seconds, floating point"""
         self.__timer = timeit.default_timer
-        self.resetTimeout(duration)
+        self.reset_timeout(duration)
         return
     
     
-    def checkTimeout(self):
+    def check_timeout(self):
         """Return the number of of seconds until timeout.
         If the duration has not been elapsed, return a positive number, 
         otherwise the return value is negative."""
         return self.__timeout - self.__timer()
     
     
-    def resetTimeout(self, duration):
+    def reset_timeout(self, duration):
         """Reset the timer to some time further into the future."""
         self.__startTime = self.__timer() # Time since start of program.
         self.__timeout = self.__startTime + duration
@@ -589,13 +589,13 @@ class CTD(object):
 				if max_iterations and num_iterations > max_iterations:  # if this is only supposed to run a few times
 					break
 				
-				while sample_interval_timer.checkTimeout() > 0.0:
+				while sample_interval_timer.check_timeout() > 0.0:
 					# Sleep for only half a second, that way we wont drift by
 					# some number of seconds when we run the DS command every
 					# hour. It may also make shutting down the service more responsive.
 					time.sleep(0.5)
 				
-				sample_interval_timer.resetTimeout(interval)
+				sample_interval_timer.reset_timeout(interval)
 			
 		return
 	
