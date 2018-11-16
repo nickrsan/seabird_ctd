@@ -23,7 +23,7 @@ setup(
     # Versions should comply with PEP440.  For a discussion on single-sourcing
     # the version across setup.py and the project code, see
     # https://packaging.python.org/en/latest/single_source_version.html
-    version="0.2.4.8",
+    version="0.2.5.0",
 
     description='Tools for communicating with, retrieving data from, and managing a fixed Seabird CTD deployment',
     long_description="""
