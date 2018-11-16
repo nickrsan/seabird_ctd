@@ -13,6 +13,7 @@ import time
 import traceback
 from datetime import timezone
 import pytz
+import timeit
 import serial
 
 import six
@@ -34,24 +35,27 @@ except:
 
 from seabird_ctd.ctd_models import *
 
+
 class CTDConfigurationError(BaseException):
 	pass
 
+	
 class CTDOperationError(BaseException):
 	pass
+	
 
 class CTDConnectionError(BaseException):
 	pass
 
+	
 class CTDUnsupportedError(BaseException):
 	pass
 
+	
 class CTDUnicodeError(BaseException):
 	def __init__(self, response):
 		self.response = response  # store the response so that we can print it later
 
-
-import timeit
 
 class TimeoutTimer(object):
 	"""Use to set timing for sample intervalse to prevent excessively long
