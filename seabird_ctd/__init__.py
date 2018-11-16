@@ -350,6 +350,19 @@ class CTD(object):
 		self.send_command("\r\n\r\n")  # Send a single character to wake the device, get the response so that we clear the buffer
 
 	def status(self, status_parts=None):
+		"""
+			Gets and parses the status. Occasionally, there's a race condition where even after
+			checking for new data up front, we can have new data at the beginning of the status.
+
+			A future enhancement would involve:
+			 	* when run with the model already defined (after first startup)
+			 	* each model finding the line that starts with the model name, and then
+			 	* send all prior lines for processing
+
+			That would guarantee no data is lost to the DS call.
+		:param status_parts:
+		:return:
+		"""
 		try:
 			if self.ctd.in_waiting > 0:  # any current waiting characters will make parsing weird.
 				self._read_all()  # clear the input buffer, check for any data in the pipeline
